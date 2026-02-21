@@ -45,6 +45,78 @@ TEAM_TEMPLATES = [
     {"color": "#FD79A8", "emoji": "🩷", "name": "Pink"},
 ]
 
+# ==================== PERSISTENCE ====================
+ROOMS_FILE = "/tmp/rooms_state.json"
+ROOM_TTL_SECONDS = 3600  # rooms expire after 1 hour
+
+def save_rooms_to_disk():
+    """Persist room metadata (not websocket connections) to disk."""
+    try:
+        data = {}
+        now = datetime.now(timezone.utc).timestamp()
+        for room_id, room in rooms.items():
+            # Skip expired rooms
+            if now - room.created_at > ROOM_TTL_SECONDS:
+                continue
+            # Skip finished rooms
+            if room.state == "finished":
+                continue
+            data[room_id] = {
+                "room_id": room.room_id,
+                "quiz_id": room.quiz_id,
+                "quiz_data": room.quiz_data,
+                "state": room.state if room.state == "lobby" else "lobby",  # reset mid-game to lobby
+                "created_at": room.created_at,
+                "next_team_idx": room.next_team_idx,
+                "teams": {
+                    tid: {
+                        "team_id": t.team_id,
+                        "name": t.name,
+                        "color": t.color,
+                        "emoji": t.emoji,
+                    }
+                    for tid, t in room.teams.items()
+                },
+            }
+        with open(ROOMS_FILE, "w") as f:
+            json.dump(data, f)
+    except Exception as e:
+        logger.error(f"Failed to save rooms to disk: {e}")
+
+
+def load_rooms_from_disk():
+    """Load room metadata from disk on startup."""
+    try:
+        if not os.path.exists(ROOMS_FILE):
+            return
+        with open(ROOMS_FILE, "r") as f:
+            data = json.load(f)
+        now = datetime.now(timezone.utc).timestamp()
+        for room_id, rd in data.items():
+            # Skip expired rooms
+            if now - rd.get("created_at", 0) > ROOM_TTL_SECONDS:
+                continue
+            room = Room(
+                room_id=rd["room_id"],
+                quiz_id=rd["quiz_id"],
+                quiz_data=rd["quiz_data"],
+                state=rd.get("state", "lobby"),
+                created_at=rd.get("created_at", now),
+                next_team_idx=rd.get("next_team_idx", 3),
+            )
+            for tid, td in rd.get("teams", {}).items():
+                room.teams[tid] = Team(
+                    team_id=td["team_id"],
+                    name=td["name"],
+                    color=td["color"],
+                    emoji=td["emoji"],
+                )
+            rooms[room_id] = room
+        logger.info(f"Loaded {len(rooms)} rooms from disk")
+    except Exception as e:
+        logger.error(f"Failed to load rooms from disk: {e}")
+
+
 # ==================== DATACLASSES ====================
 @dataclass
 class Player:
@@ -73,7 +145,7 @@ class Room:
     current_question_idx: int = 0
     question_start_time: Optional[float] = None
     created_at: float = field(default_factory=lambda: datetime.now(timezone.utc).timestamp())
-    next_team_idx: int = 3  # Red, Blue, Yellow are pre-created (indices 0, 1, 2)
+    next_team_idx: int = 3
 
     def add_default_teams(self):
         for i in range(3):
@@ -81,7 +153,6 @@ class Room:
             tid = f"team_{i}"
             self.teams[tid] = Team(team_id=tid, name=t["name"], color=t["color"], emoji=t["emoji"])
 
-    # FIX: Accept optional custom_name parameter
     def add_team(self, custom_name: Optional[str] = None) -> Optional[Team]:
         if len(self.teams) >= len(TEAM_TEMPLATES):
             return None
@@ -96,7 +167,6 @@ class Room:
             return None
         self.next_team_idx += 1
         tid = f"team_{len(self.teams)}"
-        # Use custom_name if provided, otherwise use template name
         team_name = custom_name.strip() if custom_name and custom_name.strip() else chosen["name"]
         new_team = Team(team_id=tid, name=team_name, color=chosen["color"], emoji=chosen["emoji"])
         self.teams[tid] = new_team
@@ -126,6 +196,29 @@ class Room:
 rooms: Dict[str, Room] = {}
 connections: Dict[str, List[WebSocket]] = defaultdict(list)
 
+# ==================== STARTUP ====================
+@app.on_event("startup")
+async def startup_event():
+    load_rooms_from_disk()
+    # Start background cleanup task
+    asyncio.create_task(cleanup_expired_rooms())
+
+async def cleanup_expired_rooms():
+    """Periodically remove expired/finished rooms and persist state."""
+    while True:
+        await asyncio.sleep(300)  # every 5 minutes
+        now = datetime.now(timezone.utc).timestamp()
+        expired = [
+            rid for rid, room in rooms.items()
+            if now - room.created_at > ROOM_TTL_SECONDS or room.state == "finished"
+        ]
+        for rid in expired:
+            rooms.pop(rid, None)
+            connections.pop(rid, None)
+        if expired:
+            logger.info(f"Cleaned up {len(expired)} expired rooms")
+        save_rooms_to_disk()
+
 # ==================== REST ENDPOINTS ====================
 
 class CreateRoomRequest(BaseModel):
@@ -139,6 +232,7 @@ async def create_room(request: CreateRoomRequest):
     room = Room(room_id=room_id, quiz_id=request.quiz_id, quiz_data=request.quiz_data)
     room.add_default_teams()
     rooms[room_id] = room
+    save_rooms_to_disk()  # Persist immediately after creation
 
     web_app_url = f"https://simplequizzerteamfightwebapp-production.up.railway.app?room={room_id}"
     return {"room_id": room_id, "web_app_url": web_app_url}
@@ -186,10 +280,10 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
 
             # ----- ADD TEAM -----
             if msg_type == "add_team":
-                # FIX: Pass custom_name through to add_team()
                 custom_name = data.get("custom_name")
                 new_team = room.add_team(custom_name=custom_name)
                 if new_team:
+                    save_rooms_to_disk()
                     await broadcast(room_id, {
                         "type": "teams_updated",
                         "teams": room.teams_as_dict(),
@@ -236,11 +330,10 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                     continue
 
                 if room.state != "lobby":
-                    continue  # prevent double-start
+                    continue
 
                 room.state = "countdown"
 
-                # FIX: Correct countdown — send 3, 2, 1 with 1s gap each (no duplicate "3")
                 for i in range(3, 0, -1):
                     await broadcast(room_id, {"type": "countdown", "seconds": i})
                     await asyncio.sleep(1)
@@ -322,7 +415,6 @@ async def broadcast(room_id: str, message: dict):
         except Exception:
             pass
 
-# FIX: Separate async task for quiz flow so it doesn't block the websocket handler
 async def run_quiz(room_id: str):
     room = rooms[room_id]
     questions = room.quiz_data.get("questions", [])
@@ -347,14 +439,11 @@ async def run_quiz(room_id: str):
             "total_questions": len(questions),
         })
 
-        # Wait for time limit to expire before moving to next question
         await asyncio.sleep(quiz_time)
 
-        # Small gap between questions
         if idx < len(questions) - 1:
             await asyncio.sleep(1.5)
 
-    # All questions done
     await finish_quiz(room_id)
 
 
@@ -388,7 +477,13 @@ async def finish_quiz(room_id: str):
         "winner_team": winner_team,
     })
 
+    # Clean up finished room after a delay
+    await asyncio.sleep(300)
+    rooms.pop(room_id, None)
+    connections.pop(room_id, None)
+    save_rooms_to_disk()
+
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, workers=1)
+    uvicorn.run(app, host="0.0.0.0", port=8080, workers=1)

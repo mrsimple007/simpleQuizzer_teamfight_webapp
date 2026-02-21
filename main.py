@@ -1,7 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from typing import Dict, List, Set, Optional
 from pydantic import BaseModel
 from collections import defaultdict
@@ -27,10 +27,6 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-@app.get("/health")
-async def health():
-    return {"status": "ok", "rooms": len(rooms)}
-
 @app.get("/")
 async def serve_index():
     return FileResponse("index.html")
@@ -51,22 +47,25 @@ TEAM_TEMPLATES = [
 
 # ==================== PERSISTENCE ====================
 ROOMS_FILE = "/tmp/rooms_state.json"
-ROOM_TTL_SECONDS = 3600
+ROOM_TTL_SECONDS = 3600  # rooms expire after 1 hour
 
 def save_rooms_to_disk():
+    """Persist room metadata (not websocket connections) to disk."""
     try:
         data = {}
         now = datetime.now(timezone.utc).timestamp()
         for room_id, room in rooms.items():
+            # Skip expired rooms
             if now - room.created_at > ROOM_TTL_SECONDS:
                 continue
+            # Skip finished rooms
             if room.state == "finished":
                 continue
             data[room_id] = {
                 "room_id": room.room_id,
                 "quiz_id": room.quiz_id,
                 "quiz_data": room.quiz_data,
-                "state": "lobby",
+                "state": room.state if room.state == "lobby" else "lobby",  # reset mid-game to lobby
                 "created_at": room.created_at,
                 "next_team_idx": room.next_team_idx,
                 "teams": {
@@ -86,6 +85,7 @@ def save_rooms_to_disk():
 
 
 def load_rooms_from_disk():
+    """Load room metadata from disk on startup."""
     try:
         if not os.path.exists(ROOMS_FILE):
             return
@@ -93,6 +93,7 @@ def load_rooms_from_disk():
             data = json.load(f)
         now = datetime.now(timezone.utc).timestamp()
         for room_id, rd in data.items():
+            # Skip expired rooms
             if now - rd.get("created_at", 0) > ROOM_TTL_SECONDS:
                 continue
             room = Room(
@@ -145,8 +146,6 @@ class Room:
     question_start_time: Optional[float] = None
     created_at: float = field(default_factory=lambda: datetime.now(timezone.utc).timestamp())
     next_team_idx: int = 3
-    # FIX #3: store full question log for export
-    question_log: list = field(default_factory=list)
 
     def add_default_teams(self):
         for i in range(3):
@@ -201,11 +200,13 @@ connections: Dict[str, List[WebSocket]] = defaultdict(list)
 @app.on_event("startup")
 async def startup_event():
     load_rooms_from_disk()
+    # Start background cleanup task
     asyncio.create_task(cleanup_expired_rooms())
 
 async def cleanup_expired_rooms():
+    """Periodically remove expired/finished rooms and persist state."""
     while True:
-        await asyncio.sleep(300)
+        await asyncio.sleep(300)  # every 5 minutes
         now = datetime.now(timezone.utc).timestamp()
         expired = [
             rid for rid, room in rooms.items()
@@ -231,7 +232,7 @@ async def create_room(request: CreateRoomRequest):
     room = Room(room_id=room_id, quiz_id=request.quiz_id, quiz_data=request.quiz_data)
     room.add_default_teams()
     rooms[room_id] = room
-    save_rooms_to_disk()
+    save_rooms_to_disk()  # Persist immediately after creation
 
     web_app_url = f"https://simplequizzerteamfightwebapp-production.up.railway.app?room={room_id}"
     return {"room_id": room_id, "web_app_url": web_app_url}
@@ -250,71 +251,6 @@ async def get_room(room_id: str):
         "total_questions": len(room.quiz_data.get("questions", [])),
     }
 
-# FIX #3: Export results endpoint
-@app.get("/api/room/{room_id}/results")
-async def get_room_results(room_id: str):
-    if room_id not in rooms:
-        return JSONResponse({"error": "Room not found"}, status_code=404)
-    room = rooms[room_id]
-    
-    quiz_data = room.quiz_data
-    questions = quiz_data.get("questions", [])
-    
-    # Build per-question stats
-    question_stats = []
-    for qi, q in enumerate(questions):
-        log_entry = room.question_log[qi] if qi < len(room.question_log) else {}
-        answers = log_entry.get("answers", {})
-        
-        player_answers = []
-        for uid_str, ans in answers.items():
-            player_answers.append({
-                "user_id": int(uid_str),
-                "first_name": ans.get("first_name", "?"),
-                "team": ans.get("team", ""),
-                "is_correct": ans.get("is_correct", False),
-                "points": ans.get("points", 0),
-                "answer_idx": ans.get("answer_idx", -1),
-            })
-        
-        question_stats.append({
-            "question_idx": qi,
-            "question_text": q.get("question", ""),
-            "options": q.get("options", []),
-            "correct_answer": q.get("correct_answer"),
-            "player_answers": player_answers,
-        })
-    
-    # Leaderboard
-    sorted_players = sorted(room.players.values(), key=lambda p: p.score, reverse=True)
-    leaderboard = [
-        {
-            "user_id": p.user_id,
-            "first_name": p.first_name,
-            "team": p.team,
-            "score": p.score,
-        }
-        for p in sorted_players
-    ]
-    
-    team_scores = {tid: 0 for tid in room.teams}
-    for player in room.players.values():
-        if player.team in team_scores:
-            team_scores[player.team] += player.score
-    
-    winner_team = max(team_scores, key=team_scores.get) if team_scores else None
-    
-    return {
-        "room_id": room_id,
-        "quiz_title": quiz_data.get("title", "Quiz"),
-        "total_questions": len(questions),
-        "teams": room.teams_as_dict(),
-        "team_scores": team_scores,
-        "winner_team": winner_team,
-        "leaderboard": leaderboard,
-        "question_stats": question_stats,
-    }
-
 # ==================== WEBSOCKET ====================
 
 @app.websocket("/ws/{room_id}")
@@ -322,9 +258,8 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
     await websocket.accept()
 
     if room_id not in rooms:
-        logger.warning(f"WS: Room {room_id} not found. Available rooms: {list(rooms.keys())}")
-        await websocket.send_json({"type": "error", "message": f"Room {room_id} not found. It may have expired."})
-        await websocket.close(code=1008)
+        await websocket.send_json({"type": "error", "message": "Room not found"})
+        await websocket.close()
         return
 
     connections[room_id].append(websocket)
@@ -376,16 +311,9 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                 else:
                     room.players[user_id].team = team
 
-                # FIX #6: Broadcast full teams dict so all clients see new player
                 await broadcast(room_id, {
                     "type": "player_joined",
                     "teams": room.teams_as_dict(),
-                    "player": {
-                        "user_id": user_id,
-                        "first_name": first_name,
-                        "username": username,
-                        "team": team,
-                    }
                 })
 
             # ----- START GAME -----
@@ -437,35 +365,31 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                         answer_idx < len(options) and options[answer_idx] == correct_answer
                     )
 
-                points = 0
                 if is_correct:
-                    time_elapsed = datetime.now(timezone.utc).timestamp() - (room.question_start_time or 0)
+                    time_elapsed = datetime.now(timezone.utc).timestamp() - room.question_start_time
                     quiz_time = room.quiz_data.get("quiz_time", 30)
                     time_ratio = max(0.0, 1.0 - (time_elapsed / max(quiz_time, 1)))
                     points = int(500 + (500 * time_ratio))
                     player.score += points
 
-                # FIX #3/#5: Log answer in room for export and stats
-                while len(room.question_log) <= question_idx:
-                    room.question_log.append({"answers": {}})
-                room.question_log[question_idx]["answers"][str(user_id)] = {
-                    "first_name": player.first_name,
-                    "team": player.team,
-                    "is_correct": is_correct,
-                    "points": points,
-                    "answer_idx": answer_idx,
-                }
-
-                await broadcast(room_id, {
-                    "type": "answer_submitted",
-                    "user_id": user_id,
-                    "first_name": player.first_name,
-                    "team": player.team,
-                    "is_correct": is_correct,
-                    "points": points,
-                    "new_score": player.score,
-                    # FIX #4: Do NOT send correct_answer here — only reveal after question ends
-                })
+                    await broadcast(room_id, {
+                        "type": "answer_submitted",
+                        "user_id": user_id,
+                        "first_name": player.first_name,
+                        "team": player.team,
+                        "is_correct": True,
+                        "points": points,
+                        "new_score": player.score,
+                    })
+                else:
+                    await broadcast(room_id, {
+                        "type": "answer_submitted",
+                        "user_id": user_id,
+                        "first_name": player.first_name,
+                        "team": player.team,
+                        "is_correct": False,
+                        "points": 0,
+                    })
 
     except WebSocketDisconnect:
         pass
@@ -506,11 +430,6 @@ async def run_quiz(room_id: str):
         room.current_question_idx = idx
         room.question_start_time = datetime.now(timezone.utc).timestamp()
 
-        # Ensure log slot exists
-        while len(room.question_log) <= idx:
-            room.question_log.append({"answers": {}})
-
-        # FIX #4: Send question WITHOUT correct_answer
         await broadcast(room_id, {
             "type": "question",
             "question_idx": idx,
@@ -518,27 +437,12 @@ async def run_quiz(room_id: str):
             "options": question["options"],
             "time_limit": quiz_time,
             "total_questions": len(questions),
-            # correct_answer intentionally omitted here
         })
 
         await asyncio.sleep(quiz_time)
 
-        # FIX #4: Reveal correct answer AFTER time is up
-        correct_answer = question.get("correct_answer")
-        options = question.get("options", [])
-        correct_idx = correct_answer if isinstance(correct_answer, int) else (
-            options.index(correct_answer) if correct_answer in options else -1
-        )
-        await broadcast(room_id, {
-            "type": "question_ended",
-            "question_idx": idx,
-            "correct_option_idx": correct_idx,
-            # FIX #5: Send per-question stats to all clients
-            "question_answers": room.question_log[idx].get("answers", {}),
-        })
-
         if idx < len(questions) - 1:
-            await asyncio.sleep(2.5)
+            await asyncio.sleep(1.5)
 
     await finish_quiz(room_id)
 
@@ -557,22 +461,6 @@ async def finish_quiz(room_id: str):
     winner_team = max(team_scores, key=team_scores.get) if team_scores else None
     sorted_players = sorted(room.players.values(), key=lambda p: p.score, reverse=True)
 
-    # FIX #5: Include per-question log in finish payload
-    question_log_payload = []
-    for qi, entry in enumerate(room.question_log):
-        q = room.quiz_data["questions"][qi] if qi < len(room.quiz_data["questions"]) else {}
-        options = q.get("options", [])
-        correct_answer = q.get("correct_answer")
-        correct_idx = correct_answer if isinstance(correct_answer, int) else (
-            options.index(correct_answer) if correct_answer in options else -1
-        )
-        question_log_payload.append({
-            "question_text": q.get("question", ""),
-            "options": options,
-            "correct_idx": correct_idx,
-            "answers": entry.get("answers", {}),
-        })
-
     await broadcast(room_id, {
         "type": "quiz_finished",
         "team_scores": team_scores,
@@ -587,12 +475,10 @@ async def finish_quiz(room_id: str):
             for p in sorted_players
         ],
         "winner_team": winner_team,
-        "question_log": question_log_payload,
     })
 
-    # FIX #2: Keep room alive for results access (don't delete immediately)
-    # Clean up after 30 min instead of 5
-    await asyncio.sleep(1800)
+    # Clean up finished room after a delay
+    await asyncio.sleep(300)
     rooms.pop(room_id, None)
     connections.pop(room_id, None)
     save_rooms_to_disk()

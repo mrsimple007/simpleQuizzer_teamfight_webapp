@@ -50,22 +50,19 @@ ROOMS_FILE = "/tmp/rooms_state.json"
 ROOM_TTL_SECONDS = 3600  # rooms expire after 1 hour
 
 def save_rooms_to_disk():
-    """Persist room metadata (not websocket connections) to disk."""
     try:
         data = {}
         now = datetime.now(timezone.utc).timestamp()
         for room_id, room in rooms.items():
-            # Skip expired rooms
             if now - room.created_at > ROOM_TTL_SECONDS:
                 continue
-            # Skip finished rooms
             if room.state == "finished":
                 continue
             data[room_id] = {
                 "room_id": room.room_id,
                 "quiz_id": room.quiz_id,
                 "quiz_data": room.quiz_data,
-                "state": room.state if room.state == "lobby" else "lobby",  # reset mid-game to lobby
+                "state": room.state if room.state == "lobby" else "lobby",
                 "created_at": room.created_at,
                 "next_team_idx": room.next_team_idx,
                 "teams": {
@@ -85,7 +82,6 @@ def save_rooms_to_disk():
 
 
 def load_rooms_from_disk():
-    """Load room metadata from disk on startup."""
     try:
         if not os.path.exists(ROOMS_FILE):
             return
@@ -93,7 +89,6 @@ def load_rooms_from_disk():
             data = json.load(f)
         now = datetime.now(timezone.utc).timestamp()
         for room_id, rd in data.items():
-            # Skip expired rooms
             if now - rd.get("created_at", 0) > ROOM_TTL_SECONDS:
                 continue
             room = Room(
@@ -200,13 +195,11 @@ connections: Dict[str, List[WebSocket]] = defaultdict(list)
 @app.on_event("startup")
 async def startup_event():
     load_rooms_from_disk()
-    # Start background cleanup task
     asyncio.create_task(cleanup_expired_rooms())
 
 async def cleanup_expired_rooms():
-    """Periodically remove expired/finished rooms and persist state."""
     while True:
-        await asyncio.sleep(300)  # every 5 minutes
+        await asyncio.sleep(300)
         now = datetime.now(timezone.utc).timestamp()
         expired = [
             rid for rid, room in rooms.items()
@@ -232,7 +225,7 @@ async def create_room(request: CreateRoomRequest):
     room = Room(room_id=room_id, quiz_id=request.quiz_id, quiz_data=request.quiz_data)
     room.add_default_teams()
     rooms[room_id] = room
-    save_rooms_to_disk()  # Persist immediately after creation
+    save_rooms_to_disk()
 
     web_app_url = f"https://simplequizzerteamfightwebapp-production.up.railway.app?room={room_id}"
     return {"room_id": room_id, "web_app_url": web_app_url}
@@ -249,6 +242,7 @@ async def get_room(room_id: str):
         "state": room.state,
         "teams": room.teams_as_dict(),
         "total_questions": len(room.quiz_data.get("questions", [])),
+        "quiz_time": room.quiz_data.get("quiz_time", 30),
     }
 
 # ==================== WEBSOCKET ====================
@@ -271,6 +265,8 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
             "type": "room_state",
             "teams": room.teams_as_dict(),
             "state": room.state,
+            "quiz_time": room.quiz_data.get("quiz_time", 30),
+            "total_questions": len(room.quiz_data.get("questions", [])),
         })
 
         async for raw in websocket.iter_text():
@@ -291,7 +287,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                 else:
                     await websocket.send_json({"type": "error", "message": "Maximum 6 teams reached"})
 
-            # ----- JOIN -----
+            # ----- JOIN / SWITCH TEAM -----
             elif msg_type == "join":
                 user_id = data["user_id"]
                 username = data.get("username", "")
@@ -309,6 +305,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                         team=team,
                     )
                 else:
+                    # Allow team switching
                     room.players[user_id].team = team
 
                 await broadcast(room_id, {
@@ -430,6 +427,18 @@ async def run_quiz(room_id: str):
         room.current_question_idx = idx
         room.question_start_time = datetime.now(timezone.utc).timestamp()
 
+        # Determine correct_idx for broadcasting at question end
+        correct_answer = question.get("correct_answer")
+        correct_idx = -1
+        if isinstance(correct_answer, int):
+            correct_idx = correct_answer
+        else:
+            opts = question.get("options", [])
+            for i, opt in enumerate(opts):
+                if opt == correct_answer:
+                    correct_idx = i
+                    break
+
         await broadcast(room_id, {
             "type": "question",
             "question_idx": idx,
@@ -439,10 +448,18 @@ async def run_quiz(room_id: str):
             "total_questions": len(questions),
         })
 
+        # Wait for the question time
         await asyncio.sleep(quiz_time)
 
+        # Broadcast question_ended so clients can reveal correct answer
+        await broadcast(room_id, {
+            "type": "question_ended",
+            "question_idx": idx,
+            "correct_idx": correct_idx,
+        })
+
         if idx < len(questions) - 1:
-            await asyncio.sleep(1.5)
+            await asyncio.sleep(2)
 
     await finish_quiz(room_id)
 

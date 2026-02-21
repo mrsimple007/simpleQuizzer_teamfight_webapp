@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
     <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -32,16 +33,20 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 /* ERROR */
 #s-error{justify-content:center;min-height:80vh}
-.err-box{background:var(--surf);border:1px solid rgba(240,96,96,.25);border-radius:var(--r);padding:44px 32px;text-align:center;max-width:320px}
+.err-box{background:var(--surf);border:1px solid rgba(240,96,96,.25);border-radius:var(--r);padding:44px 32px;text-align:center;max-width:340px}
 .err-icon{font-size:40px;margin-bottom:12px}
 .err-box h2{font-family:'Outfit',sans-serif;font-size:22px;color:var(--danger);margin-bottom:8px}
-.err-box p{color:var(--muted);font-size:14px}
+.err-box p{color:var(--muted);font-size:14px;line-height:1.6}
+.err-box .err-hint{margin-top:16px;padding:12px 16px;background:rgba(91,110,245,.08);border:1px solid rgba(91,110,245,.2);border-radius:12px;font-size:13px;color:#a0aaff;line-height:1.5}
 
 /* LOBBY */
 #s-lobby{justify-content:flex-start;padding-top:16px;gap:20px;width:100%}
 .lobby-head{width:100%;text-align:center;padding:16px 8px 4px}
 .quiz-badge{display:inline-block;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;letter-spacing:2.5px;color:var(--accent);background:rgba(91,110,245,.12);border:1px solid rgba(91,110,245,.28);padding:4px 14px;border-radius:50px;margin-bottom:12px}
-.lobby-head h1{font-family:'Outfit',sans-serif;font-size:26px;font-weight:900;line-height:1.2;background:linear-gradient(135deg,#fff 0%,#aab0ff 55%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px}
+.lobby-head h1{font-family:'Outfit',sans-serif;font-size:26px;font-weight:900;line-height:1.2;background:linear-gradient(135deg,#fff 0%,#aab0ff 55%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.quiz-meta-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.quiz-meta-pill{display:inline-flex;align-items:center;gap:5px;background:var(--surf2);border:1px solid var(--border2);border-radius:50px;padding:4px 12px;font-size:12px;font-weight:600;color:var(--muted)}
+.quiz-meta-pill span{color:var(--text)}
 .room-badge{display:inline-flex;align-items:center;gap:8px;background:var(--surf2);border:1px solid var(--border2);border-radius:50px;padding:6px 16px;font-size:13px}
 .room-label{color:var(--muted)}
 .room-badge strong{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;color:var(--gold);letter-spacing:1px}
@@ -79,6 +84,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .p-av{width:22px;height:22px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
 .no-p{font-size:11px;color:var(--muted2);text-align:center;padding:6px 0}
 @keyframes chipIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+
+/* SWITCH TEAM BUTTON */
+.switch-team-wrap{width:100%;margin-bottom:8px}
+.switch-team-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:rgba(91,110,245,.07);border:1.5px solid rgba(91,110,245,.25);border-radius:12px;color:#a0aaff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;margin-bottom:4px}
+.switch-team-btn:hover{border-color:var(--accent);background:rgba(91,110,245,.13);color:#fff}
+
 .add-team-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;background:transparent;border:2px dashed rgba(91,110,245,.3);border-radius:14px;color:var(--accent);font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;margin-bottom:14px}
 .add-team-btn:hover{border-color:var(--accent);background:rgba(91,110,245,.07);transform:translateY(-1px)}
 .start-btn{width:100%;padding:17px;font-family:'Outfit',sans-serif;font-size:16px;font-weight:800;background:linear-gradient(135deg,var(--accent) 0%,#8B5CF6 50%,var(--accent2) 100%);color:#fff;border:none;border-radius:14px;cursor:pointer;transition:all .3s;box-shadow:0 4px 20px rgba(91,110,245,.25)}
@@ -100,11 +111,14 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .m-input{width:100%;padding:14px 18px;background:var(--surf2);border:1.5px solid var(--border2);border-radius:var(--r2);color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:500;outline:none;transition:border-color .2s,box-shadow .2s;caret-color:var(--accent)}
 .m-input::placeholder{color:var(--muted2)}
 .m-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,110,245,.15)}
-.m-actions{width:100%;display:flex;gap:10px;padding-bottom:env(safe-area-inset-bottom,0);flex-shrink:0}
+.m-actions{width:100%;display:flex;gap:10px;padding-bottom:env(safe-area-inset-bottom,0);flex-shrink:0;padding:0 24px 24px}
 .m-cancel{flex:1;padding:13px;background:var(--surf2);border:1px solid var(--border2);border-radius:var(--r2);color:var(--muted);font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
 .m-cancel:hover{background:var(--surf3);color:var(--text)}
 .m-confirm{flex:2;padding:13px;background:linear-gradient(135deg,var(--accent),#8B5CF6);border:none;border-radius:var(--r2);color:#fff;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
 .m-confirm:hover{opacity:.88;transform:translateY(-1px)}
+
+/* SWITCH TEAM MODAL */
+#modal-switch .tsc-btn { margin-top: 4px; }
 
 /* STATS MODAL */
 #modal-stats .modal-box{max-height:90vh}
@@ -158,7 +172,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .opt::before{content:'';position:absolute;inset:0;background:var(--oc);opacity:0;transition:opacity .18s}
 .opt:hover:not(.dis):not(.pending){border-color:var(--oc);transform:translateY(-2px)}
 .opt:hover:not(.dis):not(.pending)::before{opacity:.1}
-.opt.pending{border-color:var(--oc);border-style:dashed}
+.opt.pending{border-color:var(--oc);border-style:dashed;background:rgba(91,110,245,.05)}
 .opt.pending .opt-ltr{opacity:.7}
 .opt.correct{border-color:var(--success) !important;background:rgba(67,217,142,.13) !important}
 .opt.correct .opt-ltr{background:var(--success) !important}
@@ -169,6 +183,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .opt-txt{position:relative;z-index:1;line-height:1.3}
 .ans-feed{width:100%;display:flex;flex-wrap:wrap;gap:6px;min-height:24px}
 .feed-chip{padding:4px 10px;border-radius:50px;font-size:11px;font-weight:600;animation:chipIn .2s ease;background:rgba(91,110,245,.1);border:1px solid rgba(91,110,245,.2);color:var(--muted)}
+/* feed chips: show neutral during question, reveal on time end */
 .feed-chip.correct{background:rgba(67,217,142,.1);border-color:rgba(67,217,142,.3);color:var(--success)}
 .feed-chip.wrong{background:rgba(240,96,96,.1);border-color:rgba(240,96,96,.3);color:var(--danger)}
 .pts-pop{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Outfit',sans-serif;font-size:58px;font-weight:900;color:#fff;text-shadow:0 0 40px var(--accent),0 4px 20px rgba(0,0,0,.5);pointer-events:none;animation:pp 1.2s ease-out forwards;z-index:100}
@@ -222,14 +237,15 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
     <div id="s-loading" class="state active">
         <div class="spinner"></div>
-        <p class="load-txt">Loading room...</p>
+        <p class="load-txt" data-i18n="loading">Loading room...</p>
     </div>
 
     <div id="s-error" class="state">
         <div class="err-box">
             <div class="err-icon">⚠️</div>
-            <h2>Connection Error</h2>
+            <h2 data-i18n="connError">Connection Error</h2>
             <p id="err-msg">Something went wrong.</p>
+            <div class="err-hint" id="err-hint" style="display:none" data-i18n="roomEndedHint"></div>
         </div>
     </div>
 
@@ -237,33 +253,40 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="lobby-head">
             <div class="quiz-badge">⚔️ QUIZ BATTLE</div>
             <h1 id="quiz-title">Quiz Battle</h1>
+            <div class="quiz-meta-row">
+                <div class="quiz-meta-pill">📝 <span id="q-count">—</span> <span data-i18n="questions">questions</span></div>
+                <div class="quiz-meta-pill">⏱ <span id="q-time">—</span>s / <span data-i18n="question">question</span></div>
+            </div>
             <div class="room-badge">
-                <span class="room-label">Room</span>
+                <span class="room-label" data-i18n="room">Room</span>
                 <strong id="room-code">—</strong>
             </div>
         </div>
         <div id="area-sel" style="width:100%">
             <div class="sec-head">
-                <span class="sec-title">Pick your team</span>
-                <span class="count-badge"><span id="pc1">0</span> in room</span>
+                <span class="sec-title" data-i18n="pickTeam">Pick your team</span>
+                <span class="count-badge"><span id="pc1">0</span> <span data-i18n="inRoom">in room</span></span>
             </div>
             <div id="sel-grid" class="team-sel-grid"></div>
-            <button class="add-team-btn" onclick="openAddTeam()" id="add-btn-top">＋ &nbsp;Create New Team</button>
+            <button class="add-team-btn" onclick="openAddTeam()" id="add-btn-top">＋ &nbsp;<span data-i18n="createTeam">Create New Team</span></button>
         </div>
         <div id="area-lobby" style="display:none;width:100%">
             <div class="sec-head">
-                <span class="sec-title">Battle Lobby</span>
-                <span class="count-badge"><span id="pc2">0</span> players</span>
+                <span class="sec-title" data-i18n="battleLobby">Battle Lobby</span>
+                <span class="count-badge"><span id="pc2">0</span> <span data-i18n="players">players</span></span>
             </div>
             <div id="teams-grid" class="teams-grid"></div>
-            <button class="add-team-btn" onclick="openAddTeam()">＋ &nbsp;Create New Team</button>
-            <button class="start-btn" id="start-btn" onclick="startGame()" disabled>Waiting for players...</button>
+            <div class="switch-team-wrap">
+                <button class="switch-team-btn" onclick="switchTeam()">🔄 <span data-i18n="switchTeam">Switch Team</span></button>
+            </div>
+            <button class="add-team-btn" onclick="openAddTeam()">＋ &nbsp;<span data-i18n="createTeam">Create New Team</span></button>
+            <button class="start-btn" id="start-btn" onclick="startGame()" disabled data-i18n="waitingPlayers">Waiting for players...</button>
         </div>
     </div>
 
     <div id="s-cd" class="state">
         <div class="cd-wrap">
-            <div class="cd-label">Get Ready!</div>
+            <div class="cd-label" data-i18n="getReady">Get Ready!</div>
             <div class="cd-num" id="cd-num">3</div>
             <div class="cd-rings">
                 <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
@@ -290,13 +313,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <h1 class="win-txt" id="win-txt">🏆 Results</h1>
             <div class="fin-scores" id="fin-scores"></div>
             <div class="fin-btns">
-                <button class="fin-btn stats-btn" onclick="openStats()">📊 Stats</button>
-                <button class="fin-btn export-btn" onclick="exportResults()" id="export-btn">📤 Export</button>
-                <button class="fin-btn back-btn" onclick="goBack()">🏠 Close</button>
+                <button class="fin-btn stats-btn" onclick="openStats()">📊 <span data-i18n="stats">Stats</span></button>
+                <button class="fin-btn export-btn" onclick="exportResults()" id="export-btn">📄 <span data-i18n="exportDocx">Export DOCX</span></button>
+                <button class="fin-btn back-btn" onclick="goBack()">🏠 <span data-i18n="close">Close</span></button>
             </div>
         </div>
         <div class="lb-card">
-            <h2>🏆 Leaderboard</h2>
+            <h2>🏆 <span data-i18n="leaderboard">Leaderboard</span></h2>
             <div id="lb-list"></div>
         </div>
     </div>
@@ -306,18 +329,29 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <div id="modal-add" class="modal-ov" onclick="bgClose(event,'modal-add')">
     <div class="modal-box">
         <div class="modal-hd">
-            <h3>Create New Team</h3>
+            <h3 data-i18n="createNewTeam">Create New Team</h3>
             <button class="modal-x" onclick="closeM('modal-add')">✕</button>
         </div>
         <div class="modal-bd">
             <div class="m-preview" id="m-preview">🟢</div>
-            <p class="m-hint">Emoji &amp; color auto-assigned — enter a custom name below</p>
-            <input type="text" id="m-input" class="m-input" placeholder="Team name (optional)..." maxlength="20" autocomplete="off">
-            <div class="m-actions">
-                <button class="m-cancel" onclick="closeM('modal-add')">Cancel</button>
-                <button class="m-confirm" onclick="confirmAdd()">Create Team ⚡</button>
-            </div>
+            <p class="m-hint" data-i18n="teamHint">Emoji & color auto-assigned — enter a custom name below</p>
+            <input type="text" id="m-input" class="m-input" data-i18n-placeholder="teamNamePlaceholder" placeholder="Team name (optional)..." maxlength="20" autocomplete="off">
         </div>
+        <div class="m-actions">
+            <button class="m-cancel" onclick="closeM('modal-add')" data-i18n="cancel">Cancel</button>
+            <button class="m-confirm" onclick="confirmAdd()" data-i18n="createTeamBtn">Create Team ⚡</button>
+        </div>
+    </div>
+</div>
+
+<!-- SWITCH TEAM MODAL -->
+<div id="modal-switch" class="modal-ov" onclick="bgClose(event,'modal-switch')">
+    <div class="modal-box">
+        <div class="modal-hd">
+            <h3 data-i18n="switchTeamTitle">Switch Team</h3>
+            <button class="modal-x" onclick="closeM('modal-switch')">✕</button>
+        </div>
+        <div class="modal-bd" id="switch-grid" style="padding-bottom:8px"></div>
     </div>
 </div>
 
@@ -325,7 +359,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <div id="modal-stats" class="modal-ov" onclick="bgClose(event,'modal-stats')">
     <div class="modal-box">
         <div class="modal-hd">
-            <h3>📊 Detailed Stats</h3>
+            <h3>📊 <span data-i18n="detailedStats">Detailed Stats</span></h3>
             <button class="modal-x" onclick="closeM('modal-stats')">✕</button>
         </div>
         <div class="stats-scroll" id="stats-body"></div>
@@ -335,10 +369,184 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <div id="toast" class="toast"></div>
 
 <script>
-// ── Bot deep link so "Close" always returns to the bot ──
-// Read from query param ?bot=SimpleLearnUz_bot or fall back to hard-coded name
+// ── Bot deep link ──
 const BOT_USERNAME = new URLSearchParams(location.search).get("bot") || "SimpleLearnUz_bot";
 const BOT_URL = `https://t.me/${BOT_USERNAME}`;
+
+// ── i18n ──
+const I18N = {
+    en: {
+        loading: "Loading room...",
+        connError: "Connection Error",
+        roomEndedHint: "This room may have expired or ended. Go back to the bot and create a new battle room!",
+        roomNotFound: "Room not found or has already ended.",
+        roomFinished: "This battle has already ended. Create a new room in the bot to play again!",
+        questions: "questions",
+        question: "question",
+        room: "Room",
+        pickTeam: "Pick your team",
+        inRoom: "in room",
+        createTeam: "Create New Team",
+        battleLobby: "Battle Lobby",
+        players: "players",
+        switchTeam: "Switch Team",
+        switchTeamTitle: "Switch Team",
+        waitingPlayers: "Waiting for players...",
+        startBattle: "⚔️ Start Battle!",
+        waitingMin: "Waiting for players... ({n}/2 min)",
+        getReady: "Get Ready!",
+        stats: "Stats",
+        exportDocx: "Export DOCX",
+        close: "Close",
+        createNewTeam: "Create New Team",
+        teamHint: "Emoji & color auto-assigned — enter a custom name below",
+        teamNamePlaceholder: "Team name (optional)...",
+        cancel: "Cancel",
+        createTeamBtn: "Create Team ⚡",
+        detailedStats: "Detailed Stats",
+        leaderboard: "Leaderboard",
+        noStats: "No stats recorded yet.",
+        join: "Join",
+        you: "You",
+        correctLabel: "✓ Correct",
+        wrongLabel: "✗ Wrong",
+        skipped: "⏭ Skipped",
+        exporting: "⏳ Exporting...",
+        exported: "DOCX saved! ✅",
+        exportFail: "Export failed",
+        correct: "✅ Correct! +{pts} pts",
+        wrong: "❌ Wrong answer!",
+        creatingTeam: "Creating team...",
+        maxTeams: "Maximum 6 teams reached",
+        joined: "Joined {emoji} {name}!",
+        switched: "Switched to {emoji} {name}!",
+        questionOf: "Question {n} / {total}",
+        winner: "{emoji} {name} Wins!",
+        results: "🏆 Results!",
+        teamScore: "Team Scores",
+        questionBreakdown: "Question Breakdown",
+        correctAns: "Correct Answer",
+    },
+    ru: {
+        loading: "Загрузка комнаты...",
+        connError: "Ошибка подключения",
+        roomEndedHint: "Комната могла истечь или завершиться. Вернитесь в бот и создайте новую комнату для битвы!",
+        roomNotFound: "Комната не найдена или уже завершена.",
+        roomFinished: "Эта битва уже закончилась. Создайте новую комнату в боте, чтобы сыграть снова!",
+        questions: "вопросов",
+        question: "вопрос",
+        room: "Комната",
+        pickTeam: "Выберите команду",
+        inRoom: "в комнате",
+        createTeam: "Создать команду",
+        battleLobby: "Лобби",
+        players: "игроков",
+        switchTeam: "Сменить команду",
+        switchTeamTitle: "Сменить команду",
+        waitingPlayers: "Ожидание игроков...",
+        startBattle: "⚔️ Начать битву!",
+        waitingMin: "Ожидание... ({n}/2 мин)",
+        getReady: "Приготовьтесь!",
+        stats: "Статистика",
+        exportDocx: "Экспорт DOCX",
+        close: "Закрыть",
+        createNewTeam: "Создать команду",
+        teamHint: "Эмодзи и цвет назначаются автоматически — введите название ниже",
+        teamNamePlaceholder: "Название команды (необязательно)...",
+        cancel: "Отмена",
+        createTeamBtn: "Создать ⚡",
+        detailedStats: "Подробная статистика",
+        leaderboard: "Таблица лидеров",
+        noStats: "Статистика отсутствует.",
+        join: "Вступить",
+        you: "Вы",
+        correctLabel: "✓ Верно",
+        wrongLabel: "✗ Неверно",
+        skipped: "⏭ Пропущено",
+        exporting: "⏳ Экспорт...",
+        exported: "DOCX сохранён! ✅",
+        exportFail: "Ошибка экспорта",
+        correct: "✅ Верно! +{pts} очков",
+        wrong: "❌ Неверный ответ!",
+        creatingTeam: "Создание команды...",
+        maxTeams: "Максимум 6 команд",
+        joined: "Присоединились к {emoji} {name}!",
+        switched: "Перешли в {emoji} {name}!",
+        questionOf: "Вопрос {n} / {total}",
+        winner: "{emoji} {name} побеждает!",
+        results: "🏆 Результаты!",
+        teamScore: "Счёт команд",
+        questionBreakdown: "Разбор вопросов",
+        correctAns: "Правильный ответ",
+    },
+    uz: {
+        loading: "Xona yuklanmoqda...",
+        connError: "Ulanish xatosi",
+        roomEndedHint: "Xona muddati tugagan yoki yakunlangan bo'lishi mumkin. Botga qayting va yangi jang xonasi yarating!",
+        roomNotFound: "Xona topilmadi yoki allaqachon yakunlangan.",
+        roomFinished: "Bu jang allaqachon tugadi. Yana o'ynash uchun botda yangi xona yarating!",
+        questions: "savol",
+        question: "savol",
+        room: "Xona",
+        pickTeam: "Jamoangizni tanlang",
+        inRoom: "xonada",
+        createTeam: "Yangi jamoa yaratish",
+        battleLobby: "Jang Lobbisi",
+        players: "o'yinchi",
+        switchTeam: "Jamoani almashtirish",
+        switchTeamTitle: "Jamoani almashtirish",
+        waitingPlayers: "O'yinchilar kutilmoqda...",
+        startBattle: "⚔️ Jangni boshlash!",
+        waitingMin: "Kutilmoqda... ({n}/2 min)",
+        getReady: "Tayyor bo'ling!",
+        stats: "Statistika",
+        exportDocx: "DOCX yuklab olish",
+        close: "Yopish",
+        createNewTeam: "Yangi jamoa yaratish",
+        teamHint: "Emoji va rang avtomatik tayinlanadi — quyida nom kiriting",
+        teamNamePlaceholder: "Jamoa nomi (ixtiyoriy)...",
+        cancel: "Bekor qilish",
+        createTeamBtn: "Jamoa yaratish ⚡",
+        detailedStats: "Batafsil statistika",
+        leaderboard: "Reyting",
+        noStats: "Statistika yo'q.",
+        join: "Qo'shilish",
+        you: "Siz",
+        correctLabel: "✓ To'g'ri",
+        wrongLabel: "✗ Noto'g'ri",
+        skipped: "⏭ O'tkazildi",
+        exporting: "⏳ Eksport...",
+        exported: "DOCX saqlandi! ✅",
+        exportFail: "Eksport muvaffaqiyatsiz",
+        correct: "✅ To'g'ri! +{pts} ball",
+        wrong: "❌ Noto'g'ri javob!",
+        creatingTeam: "Jamoa yaratilmoqda...",
+        maxTeams: "Maksimum 6 ta jamoa",
+        joined: "{emoji} {name} jamoasiga qo'shildingiz!",
+        switched: "{emoji} {name} jamoasiga o'tdingiz!",
+        questionOf: "Savol {n} / {total}",
+        winner: "{emoji} {name} g'alaba qildi!",
+        results: "🏆 Natijalar!",
+        teamScore: "Jamoa ballari",
+        questionBreakdown: "Savol tahlili",
+        correctAns: "To'g'ri javob",
+    }
+};
+
+let LANG = "en";
+function t(key, vars = {}) {
+    let s = (I18N[LANG] || I18N.en)[key] || (I18N.en[key] || key);
+    for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, v);
+    return s;
+}
+function applyI18n() {
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+        el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
+}
 
 const TEMPLATES = [
     {color:"#FF6B6B",emoji:"🔴",name:"Red"},
@@ -354,16 +562,25 @@ const LETTERS    = ["A","B","C","D"];
 const tg = window.Telegram?.WebApp;
 tg?.ready(); tg?.expand();
 
+// Detect language
+(function detectLang() {
+    const userLang = tg?.initDataUnsafe?.user?.language_code || navigator.language || "en";
+    if (userLang.startsWith("uz")) LANG = "uz";
+    else if (userLang.startsWith("ru")) LANG = "ru";
+    else LANG = "en";
+})();
+
 const S = {
     roomId:null, ws:null,
     userId:null, firstName:null, username:null,
     myTeam:null, teams:{}, teamScores:{},
     curQ:null, timerInt:null, answered:false,
     myAnswerIdx:null,
-    // qLog entries: { text, options, correct_idx, answers:{uid:{name,correct,pts,teamColor}} }
+    pendingAnswers: [], // buffered during question (revealed at time end)
     qLog:[],
     finData:null,
     lastCdVal:null,
+    quizData:null,
 };
 const API = window.location.origin;
 
@@ -371,9 +588,10 @@ const API = window.location.origin;
 //  INIT
 // ══════════════════════════════════════════
 async function init(){
+    applyI18n();
     const p = new URLSearchParams(location.search);
     S.roomId = p.get("room");
-    if(!S.roomId){ showErr("No room specified."); return; }
+    if(!S.roomId){ showErr(t("roomNotFound")); return; }
 
     if(tg?.initDataUnsafe?.user){
         const u = tg.initDataUnsafe.user;
@@ -387,21 +605,20 @@ async function init(){
         const r = await fetch(`${API}/api/room/${S.roomId}`);
         const d = await r.json();
 
-        // FIX: Check for error FIRST before anything else
-        if(d.error){ showErr("Room not found."); return; }
+        if(d.error){ showErr(t("roomNotFound"), true); return; }
 
         document.getElementById("quiz-title").textContent = d.quiz_title || "🎮 Quiz Battle";
         document.getElementById("room-code").textContent  = S.roomId;
+        document.getElementById("q-count").textContent = d.total_questions || "—";
 
-        // If room is finished, show a simple ended message (no /results endpoint exists)
         if(d.state === "finished"){
-            showErr("This battle has already ended.");
+            showErr(t("roomFinished"), true);
             return;
         }
 
         connectWS();
     } catch(e){
-        showErr("Could not connect to server.");
+        showErr(t("roomNotFound"), true);
     }
 }
 
@@ -412,9 +629,9 @@ function connectWS(){
     const proto = location.protocol === "https:" ? "wss:" : "ws:";
     S.ws = new WebSocket(`${proto}//${location.host}/ws/${S.roomId}`);
     S.ws.onmessage = e => handleMsg(JSON.parse(e.data));
-    S.ws.onerror   = () => showErr("Connection error.");
+    S.ws.onerror   = () => showErr(t("connError"));
     S.ws.onclose   = () => {
-        if(el("s-play").classList.contains("active")) showErr("Disconnected.");
+        if(el("s-play").classList.contains("active")) showErr(t("connError"));
     };
 }
 function send(d){ if(S.ws?.readyState === WebSocket.OPEN) S.ws.send(JSON.stringify(d)); }
@@ -426,6 +643,7 @@ function handleMsg(d){
     switch(d.type){
         case "room_state":
             if(d.teams) S.teams = d.teams;
+            if(d.quiz_time) { document.getElementById("q-time").textContent = d.quiz_time; }
             renderTeams(); showState("s-lobby"); break;
 
         case "teams_updated":
@@ -450,10 +668,12 @@ function handleMsg(d){
         case "answer_submitted":
             onAnswerSubmitted(d); break;
 
+        case "question_ended":
+            revealAnswers(d); break;
+
         case "quiz_finished":
-            // Reveal my answer first, then show results
-            revealMyAnswer();
-            setTimeout(() => showFin(d), 800);
+            revealAnswers(null);
+            setTimeout(() => showFin(d), 900);
             break;
 
         case "error":
@@ -467,7 +687,7 @@ function handleMsg(d){
 function renderTeams(){
     const ids = Object.keys(S.teams);
     let total = 0;
-    for(const t of Object.values(S.teams)) total += (t.players||[]).length;
+    for(const t2 of Object.values(S.teams)) total += (t2.players||[]).length;
     setText("pc1", total); setText("pc2", total);
 
     // Selection grid
@@ -475,17 +695,15 @@ function renderTeams(){
     for(const [tid, team] of Object.entries(S.teams)){
         const pl  = team.players || [];
         const cnt = pl.length;
-        const playerNames = pl.length > 0
-            ? pl.map(p => p.first_name).join(", ")
-            : "Empty";
+        const playerNames = pl.length > 0 ? pl.map(p => p.first_name).join(", ") : "";
         const c = document.createElement("div");
         c.className = "tsc"; c.style.setProperty("--tc", team.color);
         c.innerHTML = `<div class="tsc-glow"></div>
             <div class="tsc-emoji">${team.emoji}</div>
             <div class="tsc-name">${team.name}</div>
-            <div class="tsc-cnt">${cnt} player${cnt!==1?"s":""}</div>
+            <div class="tsc-cnt">${cnt} ${t('players')}</div>
             <div class="tsc-players">${playerNames}</div>
-            <button class="tsc-btn" onclick="joinTeam('${tid}')">Join</button>`;
+            <button class="tsc-btn" onclick="joinTeam('${tid}')">${t('join')}</button>`;
         sg.appendChild(c);
     }
 
@@ -494,10 +712,10 @@ function renderTeams(){
     for(const [tid, team] of Object.entries(S.teams)){
         const pl = team.players || [];
         const playerChips = pl.length === 0
-            ? '<div class="no-p">Empty</div>'
+            ? `<div class="no-p">—</div>`
             : pl.map(p => `<div class="p-chip ${p.user_id===S.userId?"me":""}">
                 <div class="p-av">${(p.first_name||"?")[0].toUpperCase()}</div>
-                <span>${p.first_name}${p.user_id===S.userId?" <em>(You)</em>":""}</span>
+                <span>${p.first_name}${p.user_id===S.userId?` <em>(${t('you')})</em>`:""}</span>
               </div>`).join("");
         const c = document.createElement("div");
         c.className = "team-card"; c.style.setProperty("--tc", team.color);
@@ -505,7 +723,7 @@ function renderTeams(){
             <span class="tc-emoji">${team.emoji}</span>
             <div class="tc-info">
                 <span class="tc-name">${team.name}</span>
-                <span class="tc-count">${pl.length} player${pl.length!==1?"s":""}</span>
+                <span class="tc-count">${pl.length} ${t('players')}</span>
             </div></div>
             <div class="tc-players">${playerChips}</div>`;
         tg2.appendChild(c);
@@ -521,20 +739,46 @@ function joinTeam(tid){
     send({type:"join", user_id:S.userId, username:S.username, first_name:S.firstName, team:tid});
     el("area-sel").style.display = "none";
     el("area-lobby").style.display = "block";
-    toast(`Joined ${team.emoji} ${team.name}!`, "ok");
+    toast(t("joined", {emoji: team.emoji, name: team.name}), "ok");
+}
+
+function switchTeam(){
+    const sg = el("switch-grid"); sg.innerHTML = "";
+    for(const [tid, team] of Object.entries(S.teams)){
+        if(tid === S.myTeam) continue;
+        const c = document.createElement("div");
+        c.className = "tsc"; c.style.setProperty("--tc", team.color);
+        c.style.cssText += ";margin-bottom:0;border-radius:14px";
+        const pl = team.players || [];
+        c.innerHTML = `<div class="tsc-glow"></div>
+            <div class="tsc-emoji">${team.emoji}</div>
+            <div class="tsc-name">${team.name}</div>
+            <div class="tsc-cnt">${pl.length} ${t('players')}</div>
+            <button class="tsc-btn" onclick="doSwitch('${tid}')">${t('switchTeam')}</button>`;
+        sg.appendChild(c);
+    }
+    openM("modal-switch");
+}
+
+function doSwitch(tid){
+    S.myTeam = tid;
+    const team = S.teams[tid];
+    send({type:"join", user_id:S.userId, username:S.username, first_name:S.firstName, team:tid});
+    closeM("modal-switch");
+    toast(t("switched", {emoji: team.emoji, name: team.name}), "ok");
 }
 
 function updateStart(){
     const btn = el("start-btn"); if(!btn) return;
     let total = 0, withP = 0;
-    for(const t of Object.values(S.teams)){
-        const c = (t.players||[]).length;
+    for(const t2 of Object.values(S.teams)){
+        const c = (t2.players||[]).length;
         if(c > 0) withP++;
         total += c;
     }
     const ok = total >= 2 && withP >= 2;
     btn.disabled = !ok;
-    btn.textContent = ok ? "⚔️ Start Battle!" : `Waiting for players... (${total}/2 min)`;
+    btn.textContent = ok ? t("startBattle") : t("waitingMin", {n: total});
 }
 
 function startGame(){ send({type:"start_game"}); }
@@ -556,7 +800,7 @@ function confirmAdd(){
     const name = el("m-input").value.trim();
     send({type:"add_team", custom_name: name || null});
     closeM("modal-add");
-    toast("Creating team...", "inf");
+    toast(t("creatingTeam"), "inf");
 }
 
 el("m-input").addEventListener("keydown", e => { if(e.key === "Enter") confirmAdd(); });
@@ -577,17 +821,20 @@ function animCD(n){
 // ══════════════════════════════════════════
 function showQ(d){
     showState("s-play");
-    S.curQ = d; S.answered = false; S.myAnswerIdx = null;
+    S.curQ = d; S.answered = false; S.myAnswerIdx = null; S.pendingAnswers = [];
     el("ans-feed").innerHTML = "";
 
-    // Init log for this question index
+    // Update quiz time pill
+    if(d.time_limit) document.getElementById("q-time").textContent = d.time_limit;
+
+    // Init log for this question
     while(S.qLog.length <= d.question_idx){
         S.qLog.push({ text:"", options:[], correct_idx:-1, answers:{} });
     }
     S.qLog[d.question_idx].text    = d.question_text;
     S.qLog[d.question_idx].options = d.options;
 
-    setText("q-meta", `Question ${d.question_idx+1} / ${d.total_questions}`);
+    setText("q-meta", t("questionOf", {n: d.question_idx+1, total: d.total_questions}));
     setText("q-text", d.question_text);
 
     const optsEl = el("opts"); optsEl.innerHTML = "";
@@ -616,12 +863,13 @@ function submitAns(idx, btn){
 function onAnswerSubmitted(d){
     const qi = S.curQ?.question_idx ?? 0;
 
-    // Track in qLog
+    // Buffer the answer — don't reveal correct/wrong yet
+    let teamColor = "#aaa";
+    for(const t2 of Object.values(S.teams)){
+        if(t2.players?.find(p => p.user_id === d.user_id)){ teamColor = t2.color; break; }
+    }
+
     if(S.qLog[qi]){
-        let teamColor = "#aaa";
-        for(const t of Object.values(S.teams)){
-            if(t.players?.find(p => p.user_id === d.user_id)){ teamColor = t.color; break; }
-        }
         S.qLog[qi].answers[d.user_id] = {
             name: d.first_name,
             correct: d.is_correct,
@@ -630,48 +878,74 @@ function onAnswerSubmitted(d){
         };
     }
 
-    // Update team scores live
-    if(d.is_correct){
-        for(const [tid, team] of Object.entries(S.teams)){
-            if(team.players?.find(p => p.user_id === d.user_id)){
-                S.teamScores[tid] = (S.teamScores[tid] || 0) + d.points; break;
-            }
-        }
-        updateScoreBar();
-        if(d.user_id === S.userId) ptsPopup(`+${d.points}`);
-    }
+    // Store for reveal later
+    S.pendingAnswers.push(d);
 
-    // Feed chip with correct/wrong colour
+    // Show neutral chip (no color) — just "answered"
     const feed = el("ans-feed");
     const chip = document.createElement("span");
-    chip.className = `feed-chip ${d.is_correct ? "correct" : "wrong"}`;
-    chip.textContent = `${d.first_name} ${d.is_correct ? "✓" : "✗"}`;
+    chip.className = "feed-chip";
+    chip.id = `chip-${d.user_id}`;
+    chip.textContent = `${d.first_name} ✓`;
     feed.appendChild(chip);
 }
 
 // ══════════════════════════════════════════
-//  REVEAL MY ANSWER — called before showFin
-//  (backend does NOT send question_ended, so
-//   we reveal on quiz_finished instead)
+//  REVEAL ANSWERS (after timer ends)
 // ══════════════════════════════════════════
-function revealMyAnswer(){
-    if(S.myAnswerIdx === null || !S.curQ) return;
-    const qi = S.curQ.question_idx;
-    const myRecord = S.qLog[qi]?.answers[S.userId];
-
+function revealAnswers(data){
+    clearInterval(S.timerInt);
     document.querySelectorAll(".opt").forEach(o => {
         o.classList.remove("pending");
         o.classList.add("dis");
     });
 
-    if(myRecord){
+    // Update score bar from pending answers
+    let myResult = null;
+    for(const d of S.pendingAnswers){
+        if(d.is_correct){
+            for(const [tid, team] of Object.entries(S.teams)){
+                if(team.players?.find(p => p.user_id === d.user_id)){
+                    S.teamScores[tid] = (S.teamScores[tid] || 0) + d.points; break;
+                }
+            }
+        }
+        if(d.user_id === S.userId) myResult = d;
+
+        // Update chips to correct/wrong color
+        const chip = document.getElementById(`chip-${d.user_id}`);
+        if(chip){
+            chip.className = `feed-chip ${d.is_correct ? "correct" : "wrong"}`;
+            chip.textContent = `${d.first_name} ${d.is_correct ? "✓" : "✗"}`;
+        }
+    }
+    updateScoreBar();
+
+    // Reveal my option
+    if(S.myAnswerIdx !== null){
         const myBtn = el(`opt-${S.myAnswerIdx}`);
-        if(myRecord.correct){
-            myBtn?.classList.add("correct");
-            toast(`✅ Correct! +${myRecord.pts} pts`, "ok");
+        if(myResult){
+            if(myResult.is_correct){
+                myBtn?.classList.add("correct");
+                toast(t("correct", {pts: myResult.pts}), "ok");
+                ptsPopup(`+${myResult.pts}`);
+            } else {
+                myBtn?.classList.add("wrong-sel");
+                toast(t("wrong"), "err");
+            }
         } else {
             myBtn?.classList.add("wrong-sel");
-            toast("❌ Wrong answer!", "err");
+            toast(t("wrong"), "err");
+        }
+    }
+
+    // Show correct answer from server data (if provided)
+    if(data && data.correct_idx !== undefined){
+        const qi = S.curQ?.question_idx ?? 0;
+        if(S.qLog[qi]) S.qLog[qi].correct_idx = data.correct_idx;
+        const correctBtn = el(`opt-${data.correct_idx}`);
+        if(correctBtn && !correctBtn.classList.contains("correct")){
+            correctBtn.classList.add("correct");
         }
     }
 }
@@ -699,8 +973,8 @@ function startTimer(secs){
         tNum.className = "timer-num" + (rem <= 5 ? " warn" : "");
         if(rem <= 0){
             clearInterval(S.timerInt);
-            // Reveal on timer end (before quiz_finished arrives)
-            revealMyAnswer();
+            // Reveal locally if server hasn't sent question_ended yet
+            revealAnswers(null);
         }
     }, 1000);
 }
@@ -732,28 +1006,28 @@ function showFin(d){
     showState("s-fin");
 
     const wt = S.teams[d.winner_team];
-    setText("win-txt", wt ? `${wt.emoji} ${wt.name} Wins!` : "🏆 Results!");
+    setText("win-txt", wt ? t("winner", {emoji: wt.emoji, name: wt.name}) : t("results"));
 
     const fs = el("fin-scores"); fs.innerHTML = "";
     for(const [tid, score] of Object.entries(d.team_scores)){
-        const t = S.teams[tid] || {emoji:"🏳️", name:tid, color:"#aaa"};
+        const team = S.teams[tid] || {emoji:"🏳️", name:tid, color:"#aaa"};
         const e2 = document.createElement("div");
         e2.className = "fin-sc" + (tid === d.winner_team ? " winner" : "");
-        e2.style.setProperty("--tc", t.color);
-        e2.innerHTML = `<div class="fin-emoji">${t.emoji}</div><div class="fin-name">${t.name}</div><div class="fin-pts">${score}</div>`;
+        e2.style.setProperty("--tc", team.color);
+        e2.innerHTML = `<div class="fin-emoji">${team.emoji}</div><div class="fin-name">${team.name}</div><div class="fin-pts">${score}</div>`;
         fs.appendChild(e2);
     }
 
     const ll = el("lb-list"); ll.innerHTML = "";
     const medals = ["🥇","🥈","🥉"];
     d.leaderboard.forEach((p, i) => {
-        const t = S.teams[p.team] || {color:"#aaa", emoji:"🏳️", name:p.team};
+        const team = S.teams[p.team] || {color:"#aaa", emoji:"🏳️", name:p.team};
         const e2 = document.createElement("div");
-        e2.className = "lb-item"; e2.style.setProperty("--tc", t.color);
+        e2.className = "lb-item"; e2.style.setProperty("--tc", team.color);
         e2.innerHTML = `<span class="lb-rank">${medals[i] || "#"+(i+1)}</span>
             <div class="lb-info">
                 <span class="lb-name">${p.first_name}</span>
-                <span class="lb-team">${t.emoji} ${t.name}</span>
+                <span class="lb-team">${team.emoji} ${team.name}</span>
             </div>
             <span class="lb-score">${p.score} pts</span>`;
         ll.appendChild(e2);
@@ -761,74 +1035,150 @@ function showFin(d){
 }
 
 // ══════════════════════════════════════════
-//  EXPORT RESULTS
+//  EXPORT AS DOCX
 // ══════════════════════════════════════════
 async function exportResults(){
     const btn = el("export-btn");
-    btn.disabled = true; btn.textContent = "⏳ Exporting...";
+    btn.disabled = true;
+    const origHTML = btn.innerHTML;
+    btn.innerHTML = `⏳ ${t("exporting")}`;
+
     try {
-        if(!S.finData){ toast("No results to export", "err"); return; }
-        const d         = S.finData;
-        const wt        = S.teams[d.winner_team];
+        if(!S.finData){ toast(t("exportFail"), "err"); return; }
+
+        const d = S.finData;
+        const wt = S.teams[d.winner_team];
         const quizTitle = el("quiz-title")?.textContent || "Quiz Battle";
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+                AlignmentType, HeadingLevel, WidthType, BorderStyle, ShadingType } = docx;
 
-        let text = `🏆 ${quizTitle} — Results\nRoom: ${S.roomId}\n\n`;
-        if(wt) text += `🥇 Winner: ${wt.emoji} ${wt.name}\n\n`;
-
-        text += `📊 Team Scores:\n`;
-        for(const [tid, score] of Object.entries(d.team_scores)){
-            const t = S.teams[tid] || {emoji:"🏳️", name:tid};
-            text += `${t.emoji} ${t.name}: ${score} pts\n`;
-        }
-        text += `\n🏆 Leaderboard:\n`;
-        const medals = ["🥇","🥈","🥉"];
-        (d.leaderboard||[]).forEach((p, i) => {
-            const t = S.teams[p.team] || {emoji:"🏳️", name:p.team};
-            text += `${medals[i]||`#${i+1}`} ${p.first_name} (${t.emoji} ${t.name}): ${p.score} pts\n`;
+        // Helper to make a styled paragraph
+        const hp = (text, opts = {}) => new Paragraph({
+            ...opts,
+            children: [new TextRun({ text, ...opts.run })]
         });
 
+        const sectionChildren = [];
+
+        // Title
+        sectionChildren.push(new Paragraph({
+            heading: HeadingLevel.HEADING_1,
+            children: [new TextRun({ text: `🏆 ${quizTitle}`, bold: true, size: 36 })]
+        }));
+        sectionChildren.push(hp(`Room: ${S.roomId}`, { run: { color: "888888", size: 20 } }));
+        sectionChildren.push(hp(""));
+
+        // Winner
+        if(wt){
+            sectionChildren.push(new Paragraph({
+                heading: HeadingLevel.HEADING_2,
+                children: [new TextRun({ text: `${wt.emoji} ${wt.name} — Winner!`, bold: true, color: "D4A017" })]
+            }));
+            sectionChildren.push(hp(""));
+        }
+
+        // Team scores
+        sectionChildren.push(new Paragraph({
+            heading: HeadingLevel.HEADING_2,
+            children: [new TextRun({ text: `📊 ${t("teamScore")}`, bold: true })]
+        }));
+
+        const border = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
+        const borders = { top: border, bottom: border, left: border, right: border };
+        const cellW = 4620;
+
+        const scoreRows = [
+            new TableRow({
+                children: [
+                    new TableCell({ borders, width: { size: cellW, type: WidthType.DXA }, shading: { fill: "2D3561", type: ShadingType.CLEAR }, margins: { top:80,bottom:80,left:120,right:120 }, children: [hp("Team", { run: { bold: true, color: "FFFFFF" } })] }),
+                    new TableCell({ borders, width: { size: cellW, type: WidthType.DXA }, shading: { fill: "2D3561", type: ShadingType.CLEAR }, margins: { top:80,bottom:80,left:120,right:120 }, children: [hp("Score", { run: { bold: true, color: "FFFFFF" }, alignment: AlignmentType.RIGHT })] }),
+                ]
+            }),
+            ...Object.entries(d.team_scores).map(([tid, score]) => {
+                const team = S.teams[tid] || { emoji: "🏳️", name: tid };
+                return new TableRow({ children: [
+                    new TableCell({ borders, width: { size: cellW, type: WidthType.DXA }, margins: { top:80,bottom:80,left:120,right:120 }, children: [hp(`${team.emoji} ${team.name}`)] }),
+                    new TableCell({ borders, width: { size: cellW, type: WidthType.DXA }, margins: { top:80,bottom:80,left:120,right:120 }, children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `${score} pts`, bold: true })] })] }),
+                ]});
+            })
+        ];
+        sectionChildren.push(new Table({ width: { size: 9240, type: WidthType.DXA }, columnWidths: [4620, 4620], rows: scoreRows }));
+        sectionChildren.push(hp(""));
+
+        // Leaderboard
+        sectionChildren.push(new Paragraph({
+            heading: HeadingLevel.HEADING_2,
+            children: [new TextRun({ text: `🏆 ${t("leaderboard")}`, bold: true })]
+        }));
+        const medals = ["🥇","🥈","🥉"];
+        (d.leaderboard || []).forEach((p, i) => {
+            const team = S.teams[p.team] || { emoji: "🏳️", name: p.team };
+            sectionChildren.push(hp(`${medals[i] || "#"+(i+1)} ${p.first_name} (${team.emoji} ${team.name}): ${p.score} pts`));
+        });
+        sectionChildren.push(hp(""));
+
+        // Question breakdown
         if(S.qLog.length){
-            text += `\n📝 Question Breakdown:\n`;
+            sectionChildren.push(new Paragraph({
+                heading: HeadingLevel.HEADING_2,
+                children: [new TextRun({ text: `📝 ${t("questionBreakdown")}`, bold: true })]
+            }));
+
             S.qLog.forEach((q, qi) => {
-                text += `\nQ${qi+1}: ${q.text}\n`;
+                if(!q || !q.text) return;
+                sectionChildren.push(new Paragraph({
+                    heading: HeadingLevel.HEADING_3,
+                    children: [new TextRun({ text: `Q${qi+1}: ${q.text}`, bold: true })]
+                }));
+
                 const opts = q.options || [];
                 if(q.correct_idx >= 0 && opts[q.correct_idx]){
-                    text += `✅ Correct: ${opts[q.correct_idx]}\n`;
+                    sectionChildren.push(hp(`✅ ${t("correctAns")}: ${LETTERS[q.correct_idx]}. ${opts[q.correct_idx]}`, { run: { color: "2E7D32" } }));
                 }
-                for(const [uid, ans] of Object.entries(q.answers||{})){
-                    text += `  ${ans.correct?"✓":"✗"} ${ans.name}${ans.correct?" +"+ans.pts+"pts":""}\n`;
+
+                for(const [, ans] of Object.entries(q.answers || {})){
+                    sectionChildren.push(hp(`  ${ans.correct ? "✓" : "✗"} ${ans.name}${ans.correct ? " — +" + ans.pts + " pts" : ""}`, {
+                        run: { color: ans.correct ? "1B5E20" : "B71C1C" }
+                    }));
                 }
+                sectionChildren.push(hp(""));
             });
         }
 
-        // sendData() ONLY works when the WebApp was opened via a web_app button (not a plain URL).
-        // Check isVersionAtLeast or just try sendData and catch; safest is to check initData.
-        const canSendData = tg && tg.initData && tg.initData.length > 0;
+        const doc = new Document({
+            styles: {
+                default: { document: { run: { font: "Calibri", size: 24 } } },
+                paragraphStyles: [
+                    { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true, run: { size: 36, bold: true, font: "Calibri" }, paragraph: { spacing: { before: 240, after: 120 }, outlineLevel: 0 } },
+                    { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true, run: { size: 28, bold: true, font: "Calibri" }, paragraph: { spacing: { before: 200, after: 100 }, outlineLevel: 1 } },
+                    { id: "Heading3", name: "Heading 3", basedOn: "Normal", next: "Normal", quickFormat: true, run: { size: 24, bold: true, font: "Calibri" }, paragraph: { spacing: { before: 160, after: 80 }, outlineLevel: 2 } },
+                ]
+            },
+            sections: [{
+                properties: {
+                    page: { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } }
+                },
+                children: sectionChildren
+            }]
+        });
 
-        if(canSendData){
-            // This reaches the bot's web_app_data_handler
-            tg.sendData(JSON.stringify({action:"export_results", text, room_id:S.roomId}));
-            toast("Results sent to bot! ✅", "ok");
-        } else {
-            // Fallback: copy to clipboard
-            try {
-                await navigator.clipboard.writeText(text);
-                toast("Results copied! Paste in chat 📋", "ok");
-            } catch(clipErr){
-                // Last resort: open share dialog via Telegram
-                const encoded = encodeURIComponent(text.substring(0, 500)); // Telegram URL limit
-                if(tg?.openTelegramLink){
-                    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(BOT_URL)}&text=${encoded}`);
-                } else {
-                    toast("Copy not available in this browser", "err");
-                }
-            }
-        }
+        const buffer = await Packer.toBlob(doc);
+        const url = URL.createObjectURL(buffer);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `quiz-battle-${S.roomId}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        toast(t("exported"), "ok");
     } catch(e){
         console.error(e);
-        toast("Export failed", "err");
+        toast(t("exportFail"), "err");
     } finally {
-        btn.disabled = false; btn.innerHTML = "📤 Export";
+        btn.disabled = false;
+        btn.innerHTML = origHTML;
     }
 }
 
@@ -839,7 +1189,7 @@ function openStats(){
     const body = el("stats-body"); body.innerHTML = "";
 
     if(!S.finData || !S.qLog.length){
-        body.innerHTML = '<p style="color:var(--muted);text-align:center;padding:28px 0">No stats recorded yet.</p>';
+        body.innerHTML = `<p style="color:var(--muted);text-align:center;padding:28px 0">${t("noStats")}</p>`;
         openM("modal-stats"); return;
     }
 
@@ -849,13 +1199,13 @@ function openStats(){
     }));
 
     S.qLog.forEach((q, qi) => {
-        if(!q) return;
+        if(!q || !q.text) return;
         const block = document.createElement("div");
         block.className = "stats-q-block";
 
         const opts = q.options || [];
         const correctText = (q.correct_idx >= 0 && opts[q.correct_idx])
-            ? `✅ Correct: ${LETTERS[q.correct_idx]}. ${opts[q.correct_idx]}`
+            ? `✅ ${t("correctAns")}: ${LETTERS[q.correct_idx]}. ${opts[q.correct_idx]}`
             : "";
 
         let rows = "";
@@ -865,20 +1215,20 @@ function openStats(){
                 rows += `<div class="stats-row">
                     <div class="s-av" style="background:${ans.teamColor}">${(pl.name||"?")[0].toUpperCase()}</div>
                     <span class="s-name">${pl.name}</span>
-                    <span class="s-badge ${ans.correct?"ok":"no"}">${ans.correct?"✓ Correct":"✗ Wrong"}</span>
+                    <span class="s-badge ${ans.correct?"ok":"no"}">${ans.correct ? t("correctLabel") : t("wrongLabel")}</span>
                     <span class="s-pts ${ans.correct?"earned":"zero"}">${ans.correct?"+"+ans.pts:"—"}</span>
                 </div>`;
             } else {
                 rows += `<div class="stats-row">
                     <div class="s-av" style="background:${pl.teamColor}">${(pl.name||"?")[0].toUpperCase()}</div>
                     <span class="s-name">${pl.name}</span>
-                    <span class="s-badge sk">⏭ Skipped</span>
+                    <span class="s-badge sk">${t("skipped")}</span>
                     <span class="s-pts zero">—</span>
                 </div>`;
             }
         }
 
-        block.innerHTML = `<div class="stats-q-num">Question ${qi+1} of ${S.qLog.length}</div>
+        block.innerHTML = `<div class="stats-q-num">Q${qi+1} / ${S.qLog.length}</div>
             <div class="stats-q-text">${q.text}</div>
             ${correctText ? `<div class="stats-correct-ans">${correctText}</div>` : ""}
             ${rows}`;
@@ -890,8 +1240,6 @@ function openStats(){
 }
 
 function goBack(){
-    // tg.close() returns user to wherever they opened the WebApp from.
-    // Also navigate to bot as reliable fallback for URL-opened WebApps.
     if(tg?.close) tg.close();
     if(tg?.openTelegramLink){
         tg.openTelegramLink(BOT_URL);
@@ -914,7 +1262,17 @@ function showState(id){
     document.querySelectorAll(".state").forEach(e2 => e2.classList.remove("active"));
     document.getElementById(id)?.classList.add("active");
 }
-function showErr(msg){ showState("s-error"); setText("err-msg", msg); }
+function showErr(msg, showHint = false){
+    showState("s-error");
+    setText("err-msg", msg);
+    const hint = el("err-hint");
+    if(showHint){
+        hint.textContent = t("roomEndedHint");
+        hint.style.display = "block";
+    } else {
+        hint.style.display = "none";
+    }
+}
 function el(id){ return document.getElementById(id); }
 function setText(id, txt){ const e2 = document.getElementById(id); if(e2) e2.textContent = txt; }
 
@@ -922,7 +1280,7 @@ let _tt;
 function toast(msg, type="inf"){
     const e2 = el("toast");
     e2.textContent = msg; e2.className = `toast show ${type}`;
-    clearTimeout(_tt); _tt = setTimeout(() => e2.classList.remove("show"), 2500);
+    clearTimeout(_tt); _tt = setTimeout(() => e2.classList.remove("show"), 2800);
 }
 
 init();

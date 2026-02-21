@@ -58,7 +58,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .tsc-glow{position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:80px;height:80px;background:var(--tc,var(--accent));border-radius:50%;filter:blur(28px);opacity:.18;pointer-events:none}
 .tsc-emoji{font-size:36px;margin-bottom:8px;position:relative;z-index:1}
 .tsc-name{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px;position:relative;z-index:1}
-.tsc-cnt{font-size:11px;color:var(--muted);margin-bottom:12px;position:relative;z-index:1}
+.tsc-cnt{font-size:11px;color:var(--muted);margin-bottom:4px;position:relative;z-index:1}
+.tsc-players{font-size:10px;color:var(--muted2);margin-bottom:8px;position:relative;z-index:1;min-height:14px}
 .tsc-btn{position:relative;z-index:1;width:100%;padding:8px 0;background:var(--tc,var(--accent));color:#fff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;border:none;border-radius:50px;cursor:pointer;transition:opacity .2s,transform .15s}
 .tsc-btn:hover{opacity:.85;transform:scale(1.03)}
 
@@ -88,31 +89,32 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s ease}
 .modal-ov.open{opacity:1;pointer-events:all}
 .modal-ov.open .modal-box{transform:translateY(0)}
-.modal-box{background:var(--surf);border:1px solid var(--border2);border-radius:24px 24px 0 0;width:100%;max-width:540px;transform:translateY(100%);transition:transform .38s cubic-bezier(.22,1,.36,1);overflow:hidden}
-.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:22px 24px 16px;border-bottom:1px solid var(--border)}
+.modal-box{background:var(--surf);border:1px solid var(--border2);border-radius:24px 24px 0 0;width:100%;max-width:540px;transform:translateY(100%);transition:transform .38s cubic-bezier(.22,1,.36,1);overflow:hidden;display:flex;flex-direction:column;max-height:90vh}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:22px 24px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
 .modal-hd h3{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700}
 .modal-x{width:32px;height:32px;background:var(--surf2);border:1px solid var(--border2);border-radius:50%;color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
 .modal-x:hover{background:var(--surf3);color:var(--text)}
-.modal-bd{padding:24px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.modal-bd{padding:24px;display:flex;flex-direction:column;align-items:center;gap:12px;overflow-y:auto;flex:1}
 .m-preview{font-size:52px;line-height:1;filter:drop-shadow(0 4px 16px rgba(0,0,0,.3))}
 .m-hint{font-size:13px;color:var(--muted);text-align:center}
 .m-input{width:100%;padding:14px 18px;background:var(--surf2);border:1.5px solid var(--border2);border-radius:var(--r2);color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:500;outline:none;transition:border-color .2s,box-shadow .2s;caret-color:var(--accent)}
 .m-input::placeholder{color:var(--muted2)}
 .m-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,110,245,.15)}
-.m-actions{width:100%;display:flex;gap:10px;padding-bottom:env(safe-area-inset-bottom,0)}
+.m-actions{width:100%;display:flex;gap:10px;padding-bottom:env(safe-area-inset-bottom,0);flex-shrink:0}
 .m-cancel{flex:1;padding:13px;background:var(--surf2);border:1px solid var(--border2);border-radius:var(--r2);color:var(--muted);font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
 .m-cancel:hover{background:var(--surf3);color:var(--text)}
 .m-confirm{flex:2;padding:13px;background:linear-gradient(135deg,var(--accent),#8B5CF6);border:none;border-radius:var(--r2);color:#fff;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
 .m-confirm:hover{opacity:.88;transform:translateY(-1px)}
 
 /* STATS MODAL */
-#stats-modal .modal-box{max-height:88vh;display:flex;flex-direction:column}
-.stats-scroll{overflow-y:auto;flex:1;padding:0 20px 28px}
+#modal-stats .modal-box{max-height:90vh}
+.stats-scroll{overflow-y:auto;flex:1;padding:0 20px 28px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .stats-scroll::-webkit-scrollbar{width:4px}
 .stats-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 .stats-q-block{margin-bottom:16px;background:var(--surf2);border-radius:14px;padding:16px}
 .stats-q-num{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
-.stats-q-text{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;margin-bottom:12px;line-height:1.4;border-bottom:1px solid var(--border);padding-bottom:10px}
+.stats-q-text{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;margin-bottom:8px;line-height:1.4;border-bottom:1px solid var(--border);padding-bottom:10px}
+.stats-correct-ans{font-size:11px;color:var(--success);background:rgba(67,217,142,.1);border-radius:6px;padding:4px 10px;margin-bottom:12px;display:inline-block}
 .stats-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:13px}
 .stats-row:last-child{margin-bottom:0}
 .s-av{width:26px;height:26px;flex-shrink:0;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
@@ -167,6 +169,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .opt-txt{position:relative;z-index:1;line-height:1.3}
 .ans-feed{width:100%;display:flex;flex-wrap:wrap;gap:6px;min-height:24px}
 .feed-chip{padding:4px 10px;border-radius:50px;font-size:11px;font-weight:600;animation:chipIn .2s ease;background:rgba(91,110,245,.1);border:1px solid rgba(91,110,245,.2);color:var(--muted)}
+.feed-chip.correct{background:rgba(67,217,142,.1);border-color:rgba(67,217,142,.3);color:var(--success)}
+.feed-chip.wrong{background:rgba(240,96,96,.1);border-color:rgba(240,96,96,.3);color:var(--danger)}
 .pts-pop{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Outfit',sans-serif;font-size:58px;font-weight:900;color:#fff;text-shadow:0 0 40px var(--accent),0 4px 20px rgba(0,0,0,.5);pointer-events:none;animation:pp 1.2s ease-out forwards;z-index:100}
 @keyframes pp{0%{opacity:0;transform:translate(-50%,-20%)}20%{opacity:1;transform:translate(-50%,-55%)}80%{opacity:1;transform:translate(-50%,-75%)}100%{opacity:0;transform:translate(-50%,-95%)}}
 
@@ -180,10 +184,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .fin-emoji{font-size:34px;margin-bottom:6px}
 .fin-name{font-size:12px;color:var(--muted);margin-bottom:8px}
 .fin-pts{font-family:'Outfit',sans-serif;font-size:28px;font-weight:900}
-.fin-btns{display:flex;gap:10px;width:100%}
-.fin-btn{flex:1;padding:14px 10px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;border-radius:14px;cursor:pointer;transition:all .2s;border:none;display:flex;align-items:center;justify-content:center;gap:6px}
+.fin-btns{display:flex;gap:10px;width:100%;flex-wrap:wrap}
+.fin-btn{flex:1;min-width:120px;padding:14px 10px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;border-radius:14px;cursor:pointer;transition:all .2s;border:none;display:flex;align-items:center;justify-content:center;gap:6px}
 .fin-btn.stats-btn{background:var(--surf2);border:1px solid var(--border2);color:var(--text)}
 .fin-btn.stats-btn:hover{background:var(--surf3);border-color:var(--accent);color:var(--accent)}
+.fin-btn.export-btn{background:rgba(67,217,142,.12);border:1px solid rgba(67,217,142,.35);color:var(--success)}
+.fin-btn.export-btn:hover{background:rgba(67,217,142,.2);transform:translateY(-1px)}
 .fin-btn.back-btn{background:linear-gradient(135deg,var(--accent),#8B5CF6);color:#fff;box-shadow:0 4px 16px rgba(91,110,245,.3)}
 .fin-btn.back-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(91,110,245,.4)}
 .lb-card{width:100%;background:var(--surf);border:1px solid var(--border2);border-radius:var(--r);padding:22px}
@@ -284,8 +290,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <h1 class="win-txt" id="win-txt">🏆 Results</h1>
             <div class="fin-scores" id="fin-scores"></div>
             <div class="fin-btns">
-                <button class="fin-btn stats-btn" onclick="openStats()">📊 Detailed Stats</button>
-                <button class="fin-btn back-btn" onclick="goBack()">🏠 Back to Bot</button>
+                <button class="fin-btn stats-btn" onclick="openStats()">📊 Stats</button>
+                <button class="fin-btn export-btn" onclick="exportResults()" id="export-btn">📤 Export</button>
+                <button class="fin-btn back-btn" onclick="goBack()">🏠 Close</button>
             </div>
         </div>
         <div class="lb-card">
@@ -316,7 +323,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <!-- STATS MODAL -->
 <div id="modal-stats" class="modal-ov" onclick="bgClose(event,'modal-stats')">
-    <div class="modal-box" id="stats-modal-box">
+    <div class="modal-box">
         <div class="modal-hd">
             <h3>📊 Detailed Stats</h3>
             <button class="modal-x" onclick="closeM('modal-stats')">✕</button>
@@ -328,7 +335,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <div id="toast" class="toast"></div>
 
 <script>
-// mirrors backend TEAM_TEMPLATES order exactly
 const TEMPLATES = [
     {color:"#FF6B6B",emoji:"🔴",name:"Red"},
     {color:"#4ECDC4",emoji:"🔵",name:"Blue"},
@@ -349,6 +355,7 @@ const S = {
     myTeam:null, teams:{}, teamScores:{},
     curQ:null, timerInt:null, answered:false,
     myAnswerIdx:null,
+    // qLog entries: { text, options, correct_idx, answers:{uid:{name,correct,pts,teamColor}} }
     qLog:[],
     finData:null,
     lastCdVal:null,
@@ -364,33 +371,48 @@ async function init(){
     if(!S.roomId){ showErr("No room specified."); return; }
 
     if(tg?.initDataUnsafe?.user){
-        const u=tg.initDataUnsafe.user;
-        S.userId=u.id; S.firstName=u.first_name; S.username=u.username||"";
+        const u = tg.initDataUnsafe.user;
+        S.userId = u.id; S.firstName = u.first_name; S.username = u.username||"";
     } else {
-        S.userId=Math.floor(Math.random()*1e6);
-        S.firstName="Player"+S.userId; S.username="";
+        S.userId = Math.floor(Math.random()*1e6);
+        S.firstName = "Player"+S.userId; S.username = "";
     }
-    try{
-        const r=await fetch(`${API}/api/room/${S.roomId}`);
-        const d=await r.json();
+
+    try {
+        const r = await fetch(`${API}/api/room/${S.roomId}`);
+        const d = await r.json();
+
+        // FIX: Check for error FIRST before anything else
         if(d.error){ showErr("Room not found."); return; }
-        document.getElementById("quiz-title").textContent = d.quiz_title||"🎮 Quiz Battle";
+
+        document.getElementById("quiz-title").textContent = d.quiz_title || "🎮 Quiz Battle";
         document.getElementById("room-code").textContent  = S.roomId;
+
+        // If room is finished, show a simple ended message (no /results endpoint exists)
+        if(d.state === "finished"){
+            showErr("This battle has already ended.");
+            return;
+        }
+
         connectWS();
-    } catch(e){ showErr("Could not connect to server."); }
+    } catch(e){
+        showErr("Could not connect to server.");
+    }
 }
 
 // ══════════════════════════════════════════
 //  WEBSOCKET
 // ══════════════════════════════════════════
 function connectWS(){
-    const proto = location.protocol==="https:" ? "wss:" : "ws:";
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
     S.ws = new WebSocket(`${proto}//${location.host}/ws/${S.roomId}`);
     S.ws.onmessage = e => handleMsg(JSON.parse(e.data));
-    S.ws.onerror   = ()=>showErr("Connection error.");
-    S.ws.onclose   = ()=>{ if(el("s-play").classList.contains("active")) showErr("Disconnected."); };
+    S.ws.onerror   = () => showErr("Connection error.");
+    S.ws.onclose   = () => {
+        if(el("s-play").classList.contains("active")) showErr("Disconnected.");
+    };
 }
-function send(d){ if(S.ws?.readyState===WebSocket.OPEN) S.ws.send(JSON.stringify(d)); }
+function send(d){ if(S.ws?.readyState === WebSocket.OPEN) S.ws.send(JSON.stringify(d)); }
 
 // ══════════════════════════════════════════
 //  MESSAGE HANDLER
@@ -398,16 +420,16 @@ function send(d){ if(S.ws?.readyState===WebSocket.OPEN) S.ws.send(JSON.stringify
 function handleMsg(d){
     switch(d.type){
         case "room_state":
-            if(d.teams) S.teams=d.teams;
+            if(d.teams) S.teams = d.teams;
             renderTeams(); showState("s-lobby"); break;
 
         case "teams_updated":
         case "player_joined":
-            if(d.teams) S.teams=d.teams;
+            if(d.teams) S.teams = d.teams;
             renderTeams(); updateStart(); break;
 
         case "player_left":
-            if(d.teams){ S.teams=d.teams; renderTeams(); } break;
+            if(d.teams){ S.teams = d.teams; renderTeams(); } break;
 
         case "countdown":
             if(d.seconds === S.lastCdVal) break;
@@ -424,12 +446,13 @@ function handleMsg(d){
             onAnswerSubmitted(d); break;
 
         case "quiz_finished":
+            // Reveal my answer first, then show results
             revealMyAnswer();
-            setTimeout(()=>showFin(d), 600);
+            setTimeout(() => showFin(d), 800);
             break;
 
         case "error":
-            toast(d.message,"err"); break;
+            toast(d.message, "err"); break;
     }
 }
 
@@ -437,100 +460,111 @@ function handleMsg(d){
 //  TEAM RENDERING
 // ══════════════════════════════════════════
 function renderTeams(){
-    const ids=Object.keys(S.teams);
-    let total=0;
-    for(const t of Object.values(S.teams)) total+=(t.players||[]).length;
-    setText("pc1",total); setText("pc2",total);
+    const ids = Object.keys(S.teams);
+    let total = 0;
+    for(const t of Object.values(S.teams)) total += (t.players||[]).length;
+    setText("pc1", total); setText("pc2", total);
 
-    const sg=el("sel-grid"); sg.innerHTML="";
-    for(const [tid,team] of Object.entries(S.teams)){
-        const cnt=(team.players||[]).length;
-        const c=document.createElement("div");
-        c.className="tsc"; c.style.setProperty("--tc",team.color);
-        c.innerHTML=`<div class="tsc-glow"></div>
+    // Selection grid
+    const sg = el("sel-grid"); sg.innerHTML = "";
+    for(const [tid, team] of Object.entries(S.teams)){
+        const pl  = team.players || [];
+        const cnt = pl.length;
+        const playerNames = pl.length > 0
+            ? pl.map(p => p.first_name).join(", ")
+            : "Empty";
+        const c = document.createElement("div");
+        c.className = "tsc"; c.style.setProperty("--tc", team.color);
+        c.innerHTML = `<div class="tsc-glow"></div>
             <div class="tsc-emoji">${team.emoji}</div>
             <div class="tsc-name">${team.name}</div>
-            <div class="tsc-cnt">${cnt} player${cnt!==1?'s':''}</div>
+            <div class="tsc-cnt">${cnt} player${cnt!==1?"s":""}</div>
+            <div class="tsc-players">${playerNames}</div>
             <button class="tsc-btn" onclick="joinTeam('${tid}')">Join</button>`;
         sg.appendChild(c);
     }
 
-    const tg2=el("teams-grid"); tg2.innerHTML="";
-    for(const [tid,team] of Object.entries(S.teams)){
-        const pl=team.players||[];
-        const c=document.createElement("div");
-        c.className="team-card"; c.style.setProperty("--tc",team.color);
-        c.innerHTML=`<div class="tc-top">
+    // Lobby teams grid
+    const tg2 = el("teams-grid"); tg2.innerHTML = "";
+    for(const [tid, team] of Object.entries(S.teams)){
+        const pl = team.players || [];
+        const playerChips = pl.length === 0
+            ? '<div class="no-p">Empty</div>'
+            : pl.map(p => `<div class="p-chip ${p.user_id===S.userId?"me":""}">
+                <div class="p-av">${(p.first_name||"?")[0].toUpperCase()}</div>
+                <span>${p.first_name}${p.user_id===S.userId?" <em>(You)</em>":""}</span>
+              </div>`).join("");
+        const c = document.createElement("div");
+        c.className = "team-card"; c.style.setProperty("--tc", team.color);
+        c.innerHTML = `<div class="tc-top">
             <span class="tc-emoji">${team.emoji}</span>
             <div class="tc-info">
                 <span class="tc-name">${team.name}</span>
-                <span class="tc-count">${pl.length} player${pl.length!==1?'s':''}</span>
+                <span class="tc-count">${pl.length} player${pl.length!==1?"s":""}</span>
             </div></div>
-            <div class="tc-players">${pl.length===0
-                ?'<div class="no-p">Empty</div>'
-                :pl.map(p=>`<div class="p-chip ${p.user_id===S.userId?'me':''}">
-                    <div class="p-av">${(p.first_name||'?')[0].toUpperCase()}</div>
-                    <span>${p.first_name}${p.user_id===S.userId?' <em>(You)</em>':''}</span>
-                    </div>`).join('')}
-            </div>`;
+            <div class="tc-players">${playerChips}</div>`;
         tg2.appendChild(c);
     }
-    const ab=el("add-btn-top");
-    if(ab) ab.style.display=ids.length>=6?"none":"flex";
+
+    const ab = el("add-btn-top");
+    if(ab) ab.style.display = ids.length >= 6 ? "none" : "flex";
 }
 
 function joinTeam(tid){
-    S.myTeam=tid;
-    const team=S.teams[tid];
-    send({type:"join",user_id:S.userId,username:S.username,first_name:S.firstName,team:tid});
-    el("area-sel").style.display="none";
-    el("area-lobby").style.display="block";
-    toast(`Joined ${team.emoji} ${team.name}!`,"ok");
+    S.myTeam = tid;
+    const team = S.teams[tid];
+    send({type:"join", user_id:S.userId, username:S.username, first_name:S.firstName, team:tid});
+    el("area-sel").style.display = "none";
+    el("area-lobby").style.display = "block";
+    toast(`Joined ${team.emoji} ${team.name}!`, "ok");
 }
+
 function updateStart(){
-    const btn=el("start-btn"); if(!btn) return;
-    let total=0,withP=0;
-    for(const t of Object.values(S.teams)){ const c=(t.players||[]).length; if(c>0)withP++; total+=c; }
-    const ok=total>=2&&withP>=2;
-    btn.disabled=!ok;
-    btn.textContent=ok?"⚔️ Start Battle!":`Waiting for players... (${total}/2 min)`;
+    const btn = el("start-btn"); if(!btn) return;
+    let total = 0, withP = 0;
+    for(const t of Object.values(S.teams)){
+        const c = (t.players||[]).length;
+        if(c > 0) withP++;
+        total += c;
+    }
+    const ok = total >= 2 && withP >= 2;
+    btn.disabled = !ok;
+    btn.textContent = ok ? "⚔️ Start Battle!" : `Waiting for players... (${total}/2 min)`;
 }
+
 function startGame(){ send({type:"start_game"}); }
 
 // ══════════════════════════════════════════
 //  ADD TEAM MODAL
-//  FIX: Look at ACTUAL current team count to predict next template index
 // ══════════════════════════════════════════
 function openAddTeam(){
-    const currentCount = Object.keys(S.teams).length;
-    // Backend starts with 3 default teams (indices 0,1,2) and next_team_idx=3
-    // So the Nth added team uses template index: 3 + (currentCount - 3) = currentCount
-    // Simplified: next template = currentCount % TEMPLATES.length
-    const templateIdx = currentCount % TEMPLATES.length;
-    const preview = TEMPLATES[templateIdx];
+    const currentCount  = Object.keys(S.teams).length;
+    const templateIdx   = currentCount % TEMPLATES.length;
+    const preview       = TEMPLATES[templateIdx];
     el("m-preview").textContent = preview.emoji;
     el("m-input").value = "";
     openM("modal-add");
-    setTimeout(()=>el("m-input").focus(), 350);
+    setTimeout(() => el("m-input").focus(), 350);
 }
+
 function confirmAdd(){
     const name = el("m-input").value.trim();
-    // FIX: always send custom_name key; send empty string if blank so backend uses template name
     send({type:"add_team", custom_name: name || null});
     closeM("modal-add");
-    toast("Creating team...","inf");
+    toast("Creating team...", "inf");
 }
-el("m-input").addEventListener("keydown", e=>{ if(e.key==="Enter") confirmAdd(); });
+
+el("m-input").addEventListener("keydown", e => { if(e.key === "Enter") confirmAdd(); });
 
 // ══════════════════════════════════════════
 //  COUNTDOWN
 // ══════════════════════════════════════════
 function animCD(n){
-    const e2=el("cd-num");
-    e2.textContent = n<=0 ? "GO!" : String(n);
-    e2.style.animation="none";
+    const e2 = el("cd-num");
+    e2.textContent = n <= 0 ? "GO!" : String(n);
+    e2.style.animation = "none";
     e2.offsetHeight;
-    e2.style.animation="cdPulse .9s ease-out forwards";
+    e2.style.animation = "cdPulse .9s ease-out forwards";
 }
 
 // ══════════════════════════════════════════
@@ -538,21 +572,26 @@ function animCD(n){
 // ══════════════════════════════════════════
 function showQ(d){
     showState("s-play");
-    S.curQ=d; S.answered=false; S.myAnswerIdx=null;
-    el("ans-feed").innerHTML="";
+    S.curQ = d; S.answered = false; S.myAnswerIdx = null;
+    el("ans-feed").innerHTML = "";
 
-    S.qLog[d.question_idx]={ text:d.question_text, options:d.options, answers:{} };
+    // Init log for this question index
+    while(S.qLog.length <= d.question_idx){
+        S.qLog.push({ text:"", options:[], correct_idx:-1, answers:{} });
+    }
+    S.qLog[d.question_idx].text    = d.question_text;
+    S.qLog[d.question_idx].options = d.options;
 
-    setText("q-meta",`Question ${d.question_idx+1} / ${d.total_questions}`);
-    setText("q-text",d.question_text);
+    setText("q-meta", `Question ${d.question_idx+1} / ${d.total_questions}`);
+    setText("q-text", d.question_text);
 
-    const optsEl=el("opts"); optsEl.innerHTML="";
-    d.options.forEach((opt,i)=>{
-        const b=document.createElement("button");
-        b.className="opt"; b.id=`opt-${i}`;
-        b.style.setProperty("--oc",OPT_COLORS[i%OPT_COLORS.length]);
-        b.innerHTML=`<span class="opt-ltr">${LETTERS[i]}</span><span class="opt-txt">${opt}</span>`;
-        b.onclick=()=>submitAns(i,b);
+    const optsEl = el("opts"); optsEl.innerHTML = "";
+    d.options.forEach((opt, i) => {
+        const b = document.createElement("button");
+        b.className = "opt"; b.id = `opt-${i}`;
+        b.style.setProperty("--oc", OPT_COLORS[i % OPT_COLORS.length]);
+        b.innerHTML = `<span class="opt-ltr">${LETTERS[i]}</span><span class="opt-txt">${opt}</span>`;
+        b.onclick = () => submitAns(i, b);
         optsEl.appendChild(b);
     });
 
@@ -560,10 +599,10 @@ function showQ(d){
     startTimer(d.time_limit);
 }
 
-function submitAns(idx,btn){
+function submitAns(idx, btn){
     if(S.answered) return;
-    S.answered=true; S.myAnswerIdx=idx;
-    document.querySelectorAll(".opt").forEach(o=>o.classList.add("dis"));
+    S.answered = true; S.myAnswerIdx = idx;
+    document.querySelectorAll(".opt").forEach(o => o.classList.add("dis"));
     btn.classList.remove("dis");
     btn.classList.add("pending");
     send({type:"answer", question_idx:S.curQ.question_idx, answer:idx});
@@ -571,59 +610,72 @@ function submitAns(idx,btn){
 
 function onAnswerSubmitted(d){
     const qi = S.curQ?.question_idx ?? 0;
+
+    // Track in qLog
     if(S.qLog[qi]){
-        let teamColor="#aaa";
+        let teamColor = "#aaa";
         for(const t of Object.values(S.teams)){
-            if(t.players?.find(p=>p.user_id===d.user_id)){ teamColor=t.color; break; }
+            if(t.players?.find(p => p.user_id === d.user_id)){ teamColor = t.color; break; }
         }
-        S.qLog[qi].answers[d.user_id]={
-            name:d.first_name, correct:d.is_correct, pts:d.points||0, teamColor
+        S.qLog[qi].answers[d.user_id] = {
+            name: d.first_name,
+            correct: d.is_correct,
+            pts: d.points || 0,
+            teamColor,
         };
     }
 
+    // Update team scores live
     if(d.is_correct){
-        for(const [tid,team] of Object.entries(S.teams)){
-            if(team.players?.find(p=>p.user_id===d.user_id)){
-                S.teamScores[tid]=(S.teamScores[tid]||0)+d.points; break;
+        for(const [tid, team] of Object.entries(S.teams)){
+            if(team.players?.find(p => p.user_id === d.user_id)){
+                S.teamScores[tid] = (S.teamScores[tid] || 0) + d.points; break;
             }
         }
         updateScoreBar();
-        if(d.user_id===S.userId){
-            ptsPopup(`+${d.points}`);
-        }
+        if(d.user_id === S.userId) ptsPopup(`+${d.points}`);
     }
 
-    const feed=el("ans-feed");
-    const chip=document.createElement("span");
-    chip.className="feed-chip";
-    chip.textContent=`${d.first_name} ✓`;
+    // Feed chip with correct/wrong colour
+    const feed = el("ans-feed");
+    const chip = document.createElement("span");
+    chip.className = `feed-chip ${d.is_correct ? "correct" : "wrong"}`;
+    chip.textContent = `${d.first_name} ${d.is_correct ? "✓" : "✗"}`;
     feed.appendChild(chip);
 }
 
+// ══════════════════════════════════════════
+//  REVEAL MY ANSWER — called before showFin
+//  (backend does NOT send question_ended, so
+//   we reveal on quiz_finished instead)
+// ══════════════════════════════════════════
 function revealMyAnswer(){
-    if(S.myAnswerIdx===null || !S.curQ) return;
-    const qi=S.curQ.question_idx;
+    if(S.myAnswerIdx === null || !S.curQ) return;
+    const qi = S.curQ.question_idx;
     const myRecord = S.qLog[qi]?.answers[S.userId];
-    if(!myRecord) return;
 
-    const myBtn=el(`opt-${S.myAnswerIdx}`);
-    if(!myBtn) return;
-    myBtn.classList.remove("pending");
+    document.querySelectorAll(".opt").forEach(o => {
+        o.classList.remove("pending");
+        o.classList.add("dis");
+    });
 
-    if(myRecord.correct){
-        myBtn.classList.add("correct");
-        toast(`✅ Correct! +${myRecord.pts} pts`,"ok");
-    } else {
-        myBtn.classList.add("wrong-sel");
-        toast("❌ Wrong answer!","err");
+    if(myRecord){
+        const myBtn = el(`opt-${S.myAnswerIdx}`);
+        if(myRecord.correct){
+            myBtn?.classList.add("correct");
+            toast(`✅ Correct! +${myRecord.pts} pts`, "ok");
+        } else {
+            myBtn?.classList.add("wrong-sel");
+            toast("❌ Wrong answer!", "err");
+        }
     }
 }
 
 function ptsPopup(txt){
-    const e2=document.createElement("div");
-    e2.className="pts-pop"; e2.textContent=txt;
+    const e2 = document.createElement("div");
+    e2.className = "pts-pop"; e2.textContent = txt;
     el("s-play").appendChild(e2);
-    setTimeout(()=>e2.remove(),1200);
+    setTimeout(() => e2.remove(), 1200);
 }
 
 // ══════════════════════════════════════════
@@ -631,35 +683,36 @@ function ptsPopup(txt){
 // ══════════════════════════════════════════
 function startTimer(secs){
     clearInterval(S.timerInt);
-    let rem=secs;
-    const tNum=el("timer"), tFill=el("timer-fill");
-    tNum.textContent=rem;
-    tFill.style.transition="none"; tFill.style.width="100%"; tFill.offsetHeight;
-    tFill.style.transition=`width ${secs}s linear`; tFill.style.width="0%";
-    S.timerInt=setInterval(()=>{
+    let rem = secs;
+    const tNum = el("timer"), tFill = el("timer-fill");
+    tNum.textContent = rem;
+    tFill.style.transition = "none"; tFill.style.width = "100%"; tFill.offsetHeight;
+    tFill.style.transition = `width ${secs}s linear`; tFill.style.width = "0%";
+    S.timerInt = setInterval(() => {
         rem--;
-        tNum.textContent=rem;
-        tNum.className="timer-num"+(rem<=5?" warn":"");
-        if(rem<=0){
+        tNum.textContent = rem;
+        tNum.className = "timer-num" + (rem <= 5 ? " warn" : "");
+        if(rem <= 0){
             clearInterval(S.timerInt);
+            // Reveal on timer end (before quiz_finished arrives)
             revealMyAnswer();
         }
-    },1000);
+    }, 1000);
 }
 
 // ══════════════════════════════════════════
 //  SCORE BAR
 // ══════════════════════════════════════════
 function updateScoreBar(){
-    const bar=el("score-bar"); bar.innerHTML="";
-    const ids=Object.keys(S.teams);
-    const total=ids.reduce((s,id)=>s+(S.teamScores[id]||0),0)||1;
-    ids.forEach(id=>{
-        const team=S.teams[id], score=S.teamScores[id]||0;
-        const pct=Math.max(5,(score/total)*100);
-        const seg=document.createElement("div");
-        seg.className="sb-seg"; seg.style.width=`${pct}%`; seg.style.background=team.color;
-        seg.innerHTML=`<span>${team.emoji} ${score}</span>`;
+    const bar = el("score-bar"); bar.innerHTML = "";
+    const ids  = Object.keys(S.teams);
+    const total = ids.reduce((s, id) => s + (S.teamScores[id] || 0), 0) || 1;
+    ids.forEach(id => {
+        const team  = S.teams[id], score = S.teamScores[id] || 0;
+        const pct   = Math.max(5, (score / total) * 100);
+        const seg   = document.createElement("div");
+        seg.className = "sb-seg"; seg.style.width = `${pct}%`; seg.style.background = team.color;
+        seg.innerHTML = `<span>${team.emoji} ${score}</span>`;
         bar.appendChild(seg);
     });
 }
@@ -669,29 +722,30 @@ function updateScoreBar(){
 // ══════════════════════════════════════════
 function showFin(d){
     clearInterval(S.timerInt);
-    S.finData=d;
+    S.finData = d;
+    if(d.teams) S.teams = d.teams;
     showState("s-fin");
 
-    const wt=S.teams[d.winner_team];
+    const wt = S.teams[d.winner_team];
     setText("win-txt", wt ? `${wt.emoji} ${wt.name} Wins!` : "🏆 Results!");
 
-    const fs=el("fin-scores"); fs.innerHTML="";
-    for(const [tid,score] of Object.entries(d.team_scores)){
-        const t=S.teams[tid]||{emoji:"🏳️",name:tid,color:"#aaa"};
-        const e2=document.createElement("div");
-        e2.className="fin-sc"+(tid===d.winner_team?" winner":"");
-        e2.style.setProperty("--tc",t.color);
-        e2.innerHTML=`<div class="fin-emoji">${t.emoji}</div><div class="fin-name">${t.name}</div><div class="fin-pts">${score}</div>`;
+    const fs = el("fin-scores"); fs.innerHTML = "";
+    for(const [tid, score] of Object.entries(d.team_scores)){
+        const t = S.teams[tid] || {emoji:"🏳️", name:tid, color:"#aaa"};
+        const e2 = document.createElement("div");
+        e2.className = "fin-sc" + (tid === d.winner_team ? " winner" : "");
+        e2.style.setProperty("--tc", t.color);
+        e2.innerHTML = `<div class="fin-emoji">${t.emoji}</div><div class="fin-name">${t.name}</div><div class="fin-pts">${score}</div>`;
         fs.appendChild(e2);
     }
 
-    const ll=el("lb-list"); ll.innerHTML="";
-    const medals=["🥇","🥈","🥉"];
-    d.leaderboard.forEach((p,i)=>{
-        const t=S.teams[p.team]||{color:"#aaa",emoji:"🏳️",name:p.team};
-        const e2=document.createElement("div");
-        e2.className="lb-item"; e2.style.setProperty("--tc",t.color);
-        e2.innerHTML=`<span class="lb-rank">${medals[i]||"#"+(i+1)}</span>
+    const ll = el("lb-list"); ll.innerHTML = "";
+    const medals = ["🥇","🥈","🥉"];
+    d.leaderboard.forEach((p, i) => {
+        const t = S.teams[p.team] || {color:"#aaa", emoji:"🏳️", name:p.team};
+        const e2 = document.createElement("div");
+        e2.className = "lb-item"; e2.style.setProperty("--tc", t.color);
+        e2.innerHTML = `<span class="lb-rank">${medals[i] || "#"+(i+1)}</span>
             <div class="lb-info">
                 <span class="lb-name">${p.first_name}</span>
                 <span class="lb-team">${t.emoji} ${t.name}</span>
@@ -702,51 +756,116 @@ function showFin(d){
 }
 
 // ══════════════════════════════════════════
+//  EXPORT RESULTS
+// ══════════════════════════════════════════
+async function exportResults(){
+    const btn = el("export-btn");
+    btn.disabled = true; btn.textContent = "⏳ Exporting...";
+    try {
+        if(!S.finData){ toast("No results to export", "err"); return; }
+        const d         = S.finData;
+        const wt        = S.teams[d.winner_team];
+        const quizTitle = el("quiz-title")?.textContent || "Quiz Battle";
+
+        let text = `🏆 ${quizTitle} — Results\nRoom: ${S.roomId}\n\n`;
+        if(wt) text += `🥇 Winner: ${wt.emoji} ${wt.name}\n\n`;
+
+        text += `📊 Team Scores:\n`;
+        for(const [tid, score] of Object.entries(d.team_scores)){
+            const t = S.teams[tid] || {emoji:"🏳️", name:tid};
+            text += `${t.emoji} ${t.name}: ${score} pts\n`;
+        }
+        text += `\n🏆 Leaderboard:\n`;
+        const medals = ["🥇","🥈","🥉"];
+        (d.leaderboard||[]).forEach((p, i) => {
+            const t = S.teams[p.team] || {emoji:"🏳️", name:p.team};
+            text += `${medals[i]||`#${i+1}`} ${p.first_name} (${t.emoji} ${t.name}): ${p.score} pts\n`;
+        });
+
+        if(S.qLog.length){
+            text += `\n📝 Question Breakdown:\n`;
+            S.qLog.forEach((q, qi) => {
+                text += `\nQ${qi+1}: ${q.text}\n`;
+                const opts = q.options || [];
+                if(q.correct_idx >= 0 && opts[q.correct_idx]){
+                    text += `✅ Correct: ${opts[q.correct_idx]}\n`;
+                }
+                for(const [uid, ans] of Object.entries(q.answers||{})){
+                    text += `  ${ans.correct?"✓":"✗"} ${ans.name}${ans.correct?" +"+ans.pts+"pts":""}\n`;
+                }
+            });
+        }
+
+        if(tg?.sendData){
+            tg.sendData(JSON.stringify({action:"export_results", text, room_id:S.roomId}));
+            toast("Results sent to bot! ✅", "ok");
+        } else {
+            await navigator.clipboard.writeText(text);
+            toast("Results copied to clipboard! 📋", "ok");
+        }
+    } catch(e){
+        console.error(e);
+        toast("Export failed", "err");
+    } finally {
+        btn.disabled = false; btn.innerHTML = "📤 Export";
+    }
+}
+
+// ══════════════════════════════════════════
 //  STATS MODAL
 // ══════════════════════════════════════════
 function openStats(){
-    const body=el("stats-body"); body.innerHTML="";
+    const body = el("stats-body"); body.innerHTML = "";
 
     if(!S.finData || !S.qLog.length){
-        body.innerHTML='<p style="color:var(--muted);text-align:center;padding:28px 0">No stats recorded yet.</p>';
+        body.innerHTML = '<p style="color:var(--muted);text-align:center;padding:28px 0">No stats recorded yet.</p>';
         openM("modal-stats"); return;
     }
 
-    const players = S.finData.leaderboard.map(p=>({
-        uid:p.user_id, name:p.first_name,
-        teamColor:(S.teams[p.team]||{}).color||"#aaa",
-        teamEmoji:(S.teams[p.team]||{}).emoji||"🏳️",
+    const players = (S.finData.leaderboard||[]).map(p => ({
+        uid: p.user_id, name: p.first_name,
+        teamColor: (S.teams[p.team]||{}).color || "#aaa",
     }));
 
-    S.qLog.forEach((q,qi)=>{
+    S.qLog.forEach((q, qi) => {
         if(!q) return;
-        const block=document.createElement("div");
-        block.className="stats-q-block";
-        let rows="";
+        const block = document.createElement("div");
+        block.className = "stats-q-block";
+
+        const opts = q.options || [];
+        const correctText = (q.correct_idx >= 0 && opts[q.correct_idx])
+            ? `✅ Correct: ${LETTERS[q.correct_idx]}. ${opts[q.correct_idx]}`
+            : "";
+
+        let rows = "";
         for(const pl of players){
-            const ans=q.answers[pl.uid];
+            const ans = q.answers[pl.uid];
             if(ans){
-                rows+=`<div class="stats-row">
-                    <div class="s-av" style="background:${ans.teamColor}">${pl.name[0].toUpperCase()}</div>
+                rows += `<div class="stats-row">
+                    <div class="s-av" style="background:${ans.teamColor}">${(pl.name||"?")[0].toUpperCase()}</div>
                     <span class="s-name">${pl.name}</span>
-                    <span class="s-badge ${ans.correct?'ok':'no'}">${ans.correct?'✓ Correct':'✗ Wrong'}</span>
-                    <span class="s-pts ${ans.correct?'earned':'zero'}">${ans.correct?'+'+ans.pts:'—'}</span>
+                    <span class="s-badge ${ans.correct?"ok":"no"}">${ans.correct?"✓ Correct":"✗ Wrong"}</span>
+                    <span class="s-pts ${ans.correct?"earned":"zero"}">${ans.correct?"+"+ans.pts:"—"}</span>
                 </div>`;
             } else {
-                rows+=`<div class="stats-row">
-                    <div class="s-av" style="background:${pl.teamColor}">${pl.name[0].toUpperCase()}</div>
+                rows += `<div class="stats-row">
+                    <div class="s-av" style="background:${pl.teamColor}">${(pl.name||"?")[0].toUpperCase()}</div>
                     <span class="s-name">${pl.name}</span>
                     <span class="s-badge sk">⏭ Skipped</span>
                     <span class="s-pts zero">—</span>
                 </div>`;
             }
         }
-        block.innerHTML=`<div class="stats-q-num">Question ${qi+1} of ${S.qLog.length}</div>
-            <div class="stats-q-text">${q.text}</div>${rows}`;
+
+        block.innerHTML = `<div class="stats-q-num">Question ${qi+1} of ${S.qLog.length}</div>
+            <div class="stats-q-text">${q.text}</div>
+            ${correctText ? `<div class="stats-correct-ans">${correctText}</div>` : ""}
+            ${rows}`;
         body.appendChild(block);
     });
 
     openM("modal-stats");
+    setTimeout(() => { body.scrollTop = 0; }, 100);
 }
 
 function goBack(){
@@ -759,24 +878,24 @@ function goBack(){
 // ══════════════════════════════════════════
 function openM(id){ document.getElementById(id).classList.add("open"); }
 function closeM(id){ document.getElementById(id).classList.remove("open"); }
-function bgClose(e,id){ if(e.target===document.getElementById(id)) closeM(id); }
+function bgClose(e, id){ if(e.target === document.getElementById(id)) closeM(id); }
 
 // ══════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════
 function showState(id){
-    document.querySelectorAll(".state").forEach(e2=>e2.classList.remove("active"));
+    document.querySelectorAll(".state").forEach(e2 => e2.classList.remove("active"));
     document.getElementById(id)?.classList.add("active");
 }
-function showErr(msg){ showState("s-error"); setText("err-msg",msg); }
+function showErr(msg){ showState("s-error"); setText("err-msg", msg); }
 function el(id){ return document.getElementById(id); }
-function setText(id,txt){ const e2=document.getElementById(id); if(e2) e2.textContent=txt; }
+function setText(id, txt){ const e2 = document.getElementById(id); if(e2) e2.textContent = txt; }
 
 let _tt;
-function toast(msg,type="inf"){
-    const e2=el("toast");
-    e2.textContent=msg; e2.className=`toast show ${type}`;
-    clearTimeout(_tt); _tt=setTimeout(()=>e2.classList.remove("show"),2500);
+function toast(msg, type="inf"){
+    const e2 = el("toast");
+    e2.textContent = msg; e2.className = `toast show ${type}`;
+    clearTimeout(_tt); _tt = setTimeout(() => e2.classList.remove("show"), 2500);
 }
 
 init();

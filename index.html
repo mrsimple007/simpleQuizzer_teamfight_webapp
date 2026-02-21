@@ -335,6 +335,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <div id="toast" class="toast"></div>
 
 <script>
+// ── Bot deep link so "Close" always returns to the bot ──
+// Read from query param ?bot=SimpleLearnUz_bot or fall back to hard-coded name
+const BOT_USERNAME = new URLSearchParams(location.search).get("bot") || "SimpleLearnUz_bot";
+const BOT_URL = `https://t.me/${BOT_USERNAME}`;
+
 const TEMPLATES = [
     {color:"#FF6B6B",emoji:"🔴",name:"Red"},
     {color:"#4ECDC4",emoji:"🔵",name:"Blue"},
@@ -796,12 +801,28 @@ async function exportResults(){
             });
         }
 
-        if(tg?.sendData){
+        // sendData() ONLY works when the WebApp was opened via a web_app button (not a plain URL).
+        // Check isVersionAtLeast or just try sendData and catch; safest is to check initData.
+        const canSendData = tg && tg.initData && tg.initData.length > 0;
+
+        if(canSendData){
+            // This reaches the bot's web_app_data_handler
             tg.sendData(JSON.stringify({action:"export_results", text, room_id:S.roomId}));
             toast("Results sent to bot! ✅", "ok");
         } else {
-            await navigator.clipboard.writeText(text);
-            toast("Results copied to clipboard! 📋", "ok");
+            // Fallback: copy to clipboard
+            try {
+                await navigator.clipboard.writeText(text);
+                toast("Results copied! Paste in chat 📋", "ok");
+            } catch(clipErr){
+                // Last resort: open share dialog via Telegram
+                const encoded = encodeURIComponent(text.substring(0, 500)); // Telegram URL limit
+                if(tg?.openTelegramLink){
+                    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(BOT_URL)}&text=${encoded}`);
+                } else {
+                    toast("Copy not available in this browser", "err");
+                }
+            }
         }
     } catch(e){
         console.error(e);
@@ -869,8 +890,14 @@ function openStats(){
 }
 
 function goBack(){
-    if(tg?.close){ tg.close(); }
-    else { history.back(); }
+    // tg.close() returns user to wherever they opened the WebApp from.
+    // Also navigate to bot as reliable fallback for URL-opened WebApps.
+    if(tg?.close) tg.close();
+    if(tg?.openTelegramLink){
+        tg.openTelegramLink(BOT_URL);
+    } else {
+        window.location.href = BOT_URL;
+    }
 }
 
 // ══════════════════════════════════════════

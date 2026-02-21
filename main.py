@@ -144,7 +144,7 @@ async def create_room(request: CreateRoomRequest):
     room.add_default_teams()
     rooms[room_id] = room
 
-    web_app_url = f"https://malik-noneternal-postnuptially.ngrok-free.dev?room={room_id}"
+    web_app_url = f"https://simplequizzerteamfightwebapp-production.up.railway.app?room={room_id}"
     return {"room_id": room_id, "web_app_url": web_app_url}
 
 

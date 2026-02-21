@@ -27,6 +27,10 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+@app.get("/health")
+async def health():
+    return {"status": "ok", "rooms": len(rooms)}
+
 @app.get("/")
 async def serve_index():
     return FileResponse("index.html")
@@ -318,8 +322,9 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
     await websocket.accept()
 
     if room_id not in rooms:
-        await websocket.send_json({"type": "error", "message": "Room not found"})
-        await websocket.close()
+        logger.warning(f"WS: Room {room_id} not found. Available rooms: {list(rooms.keys())}")
+        await websocket.send_json({"type": "error", "message": f"Room {room_id} not found. It may have expired."})
+        await websocket.close(code=1008)
         return
 
     connections[room_id].append(websocket)

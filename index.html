@@ -1064,10 +1064,183 @@ function showFin(d){
 }
 
 // ══════════════════════════════════════════
-//  FIX 3: EXPORT AS DOCX
-//  Rewrote using docx.js loaded dynamically at export time
-//  to avoid issues with UMD global not being available immediately
+//  EXPORT AS DOCX — Zero dependency implementation
+//  Builds a valid .docx (Office Open XML) file
+//  entirely in-browser using JSZip-free raw ZIP
+//  construction via the pako deflate alternative:
+//  we use a simple uncompressed ZIP builder so
+//  no external libraries are needed at all.
 // ══════════════════════════════════════════
+
+// ── Minimal ZIP builder (no compression, store-only) ──
+// DOCX files are ZIP archives. We build one from scratch.
+const DocxZip = {
+    files: [],
+    reset() { this.files = []; },
+    add(name, content) {
+        // content can be string or Uint8Array
+        const data = typeof content === "string"
+            ? new TextEncoder().encode(content)
+            : content;
+        this.files.push({ name, data });
+    },
+    build() {
+        const enc = new TextEncoder();
+        let offset = 0;
+        const localHeaders = [];
+        const centralDir = [];
+
+        for (const file of this.files) {
+            const nameBytes = enc.encode(file.name);
+            const data = file.data;
+            const crc = crc32(data);
+
+            // Local file header
+            const lh = new Uint8Array(30 + nameBytes.length);
+            const lhv = new DataView(lh.buffer);
+            lhv.setUint32(0, 0x04034b50, true);   // signature
+            lhv.setUint16(4, 20, true);             // version needed
+            lhv.setUint16(6, 0, true);              // flags
+            lhv.setUint16(8, 0, true);              // compression: store
+            lhv.setUint16(10, 0, true);             // mod time
+            lhv.setUint16(12, 0, true);             // mod date
+            lhv.setUint32(14, crc, true);           // crc32
+            lhv.setUint32(18, data.length, true);   // compressed size
+            lhv.setUint32(22, data.length, true);   // uncompressed size
+            lhv.setUint16(26, nameBytes.length, true); // name length
+            lhv.setUint16(28, 0, true);             // extra length
+            lh.set(nameBytes, 30);
+
+            localHeaders.push({ header: lh, data, nameBytes, crc, offset });
+
+            // Central directory entry
+            const cd = new Uint8Array(46 + nameBytes.length);
+            const cdv = new DataView(cd.buffer);
+            cdv.setUint32(0, 0x02014b50, true);    // signature
+            cdv.setUint16(4, 20, true);             // version made
+            cdv.setUint16(6, 20, true);             // version needed
+            cdv.setUint16(8, 0, true);              // flags
+            cdv.setUint16(10, 0, true);             // compression
+            cdv.setUint16(12, 0, true);             // mod time
+            cdv.setUint16(14, 0, true);             // mod date
+            cdv.setUint32(16, crc, true);           // crc32
+            cdv.setUint32(20, data.length, true);   // compressed size
+            cdv.setUint32(24, data.length, true);   // uncompressed size
+            cdv.setUint16(28, nameBytes.length, true);
+            cdv.setUint16(30, 0, true);             // extra length
+            cdv.setUint16(32, 0, true);             // comment length
+            cdv.setUint16(34, 0, true);             // disk start
+            cdv.setUint16(36, 0, true);             // internal attr
+            cdv.setUint32(38, 0, true);             // external attr
+            cdv.setUint32(42, offset, true);        // local header offset
+            cd.set(nameBytes, 46);
+            centralDir.push(cd);
+
+            offset += lh.length + data.length;
+        }
+
+        const cdOffset = offset;
+        const cdSize = centralDir.reduce((s, c) => s + c.length, 0);
+
+        // End of central directory record
+        const eocd = new Uint8Array(22);
+        const eocdv = new DataView(eocd.buffer);
+        eocdv.setUint32(0, 0x06054b50, true);
+        eocdv.setUint16(4, 0, true);
+        eocdv.setUint16(6, 0, true);
+        eocdv.setUint16(8, this.files.length, true);
+        eocdv.setUint16(10, this.files.length, true);
+        eocdv.setUint32(12, cdSize, true);
+        eocdv.setUint32(16, cdOffset, true);
+        eocdv.setUint16(20, 0, true);
+
+        const parts = [];
+        for (const f of localHeaders) {
+            parts.push(f.header);
+            parts.push(f.data);
+        }
+        for (const c of centralDir) parts.push(c);
+        parts.push(eocd);
+
+        const total = parts.reduce((s, p) => s + p.length, 0);
+        const out = new Uint8Array(total);
+        let pos = 0;
+        for (const p of parts) { out.set(p, pos); pos += p.length; }
+        return out;
+    }
+};
+
+function crc32(data) {
+    let crc = 0xFFFFFFFF;
+    if (!crc32.table) {
+        crc32.table = new Uint32Array(256);
+        for (let i = 0; i < 256; i++) {
+            let c = i;
+            for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+            crc32.table[i] = c;
+        }
+    }
+    for (const byte of data) crc = crc32.table[(crc ^ byte) & 0xFF] ^ (crc >>> 8);
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+// ── XML helpers ──
+function xmlEsc(s) {
+    return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        // strip non-XML-safe characters (emoji etc cause issues in some viewers)
+        .replace(/[^\x09\x0A\x0D\x20-\x7E\u00A0-\uD7FF\uE000-\uFFFD]/g, "");
+}
+
+function wPara(runs, opts = {}) {
+    const pPr = opts.style
+        ? `<w:pPr><w:pStyle w:val="${opts.style}"/></w:pPr>`
+        : (opts.spacing ? `<w:pPr><w:spacing w:before="${opts.spacing.before||0}" w:after="${opts.spacing.after||0}"/></w:pPr>` : "");
+    return `<w:p>${pPr}${runs}</w:p>`;
+}
+
+function wRun(text, opts = {}) {
+    const rPr = [
+        opts.bold ? "<w:b/><w:bCs/>" : "",
+        opts.size ? `<w:sz w:val="${opts.size}"/><w:szCs w:val="${opts.size}"/>` : "",
+        opts.color ? `<w:color w:val="${opts.color}"/>` : "",
+    ].join("");
+    return `<w:r>${rPr ? `<w:rPr>${rPr}</w:rPr>` : ""}<w:t xml:space="preserve">${xmlEsc(text)}</w:t></w:r>`;
+}
+
+function wHeading(text, level, opts = {}) {
+    return wPara(wRun(text, { bold: true, size: [0,40,32,26][level]||26, color: opts.color }), { style: `Heading${level}` });
+}
+
+function wTableRow(cells, isHeader = false) {
+    const trPr = isHeader ? `<w:trPr><w:tblHeader/></w:trPr>` : "";
+    return `<w:tr>${trPr}${cells.join("")}</w:tr>`;
+}
+
+function wTableCell(text, opts = {}) {
+    const fill = opts.fill ? `<w:shd w:val="clear" w:color="auto" w:fill="${opts.fill}"/>` : "";
+    const tcPr = `<w:tcPr>${fill}<w:tcW w:w="${opts.width || 3080}" w:type="dxa"/></w:tcPr>`;
+    const run = wRun(text, { bold: opts.bold, color: opts.color, size: 20 });
+    return `<w:tc>${tcPr}${wPara(run)}</w:tc>`;
+}
+
+function wTable(rows, colWidths) {
+    const cols = colWidths.map(w => `<w:gridCol w:w="${w}"/>`).join("");
+    const tblW = colWidths.reduce((a,b)=>a+b,0);
+    const tblPr = `<w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="${tblW}" w:type="dxa"/><w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>
+    </w:tblBorders></w:tblPr><w:tblGrid>${cols}</w:tblGrid>`;
+    return `<w:tbl>${tblPr}${rows.join("")}</w:tbl>`;
+}
+
 async function exportResults(){
     const btn = el("export-btn");
     btn.disabled = true;
@@ -1077,256 +1250,222 @@ async function exportResults(){
     try {
         if(!S.finData){ toast(t("exportFail"), "err"); return; }
 
-        // Dynamically load docx library if not already loaded
-        await loadDocxLib();
-
         const d = S.finData;
         const wt = S.teams[d.winner_team];
-        const quizTitle = el("quiz-title")?.textContent || "Quiz Battle";
-        const docxLib = window.docx;
+        const quizTitle = (el("quiz-title")?.textContent || "Quiz Battle").replace(/[^\x20-\x7E]/g, "");
+        const medals = ["#1","#2","#3"];
 
-        if(!docxLib || !docxLib.Document){
-            throw new Error("docx library not loaded properly");
-        }
+        // ── Build document body XML ──
+        const body = [];
 
-        const {
-            Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-            AlignmentType, HeadingLevel, WidthType, BorderStyle
-        } = docxLib;
+        body.push(wHeading(`Quiz Battle Results`, 1));
+        body.push(wPara(wRun(`Room: ${S.roomId}`, { color: "888888", size: 20 })));
+        body.push(wPara(wRun(`Quiz: ${quizTitle}`, { size: 20 })));
+        body.push(wPara(""));
 
-        // Helper: create a simple paragraph with text
-        function makePara(text, opts = {}) {
-            return new Paragraph({
-                alignment: opts.align || AlignmentType.LEFT,
-                heading: opts.heading || undefined,
-                spacing: opts.spacing || undefined,
-                children: [new TextRun({
-                    text: String(text),
-                    bold: opts.bold || false,
-                    color: opts.color || undefined,
-                    size: opts.size || 24,
-                    font: opts.font || "Calibri",
-                })]
-            });
-        }
-
-        // Helper: empty line
-        function emptyLine() {
-            return new Paragraph({ children: [new TextRun({ text: "" })] });
-        }
-
-        // Cell border definition
-        const cellBorder = {
-            top:    { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
-            bottom: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
-            left:   { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
-            right:  { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
-        };
-
-        const cellMargins = { top: 80, bottom: 80, left: 120, right: 120 };
-        const halfWidth = { size: 4620, type: WidthType.DXA };
-        const fullWidth = { size: 9240, type: WidthType.DXA };
-
-        function makeHeaderCell(text) {
-            return new TableCell({
-                borders: cellBorder,
-                width: halfWidth,
-                shading: { fill: "2D3561" },
-                margins: cellMargins,
-                children: [new Paragraph({
-                    children: [new TextRun({ text, bold: true, color: "FFFFFF", size: 22, font: "Calibri" })]
-                })]
-            });
-        }
-
-        function makeDataCell(text, align) {
-            return new TableCell({
-                borders: cellBorder,
-                width: halfWidth,
-                margins: cellMargins,
-                children: [new Paragraph({
-                    alignment: align || AlignmentType.LEFT,
-                    children: [new TextRun({ text: String(text), size: 22, font: "Calibri" })]
-                })]
-            });
-        }
-
-        const sectionChildren = [];
-
-        // ── Title ──
-        sectionChildren.push(new Paragraph({
-            heading: HeadingLevel.HEADING_1,
-            children: [new TextRun({ text: `🏆 ${quizTitle}`, bold: true, size: 40, font: "Calibri" })]
-        }));
-        sectionChildren.push(makePara(`Room: ${S.roomId}`, { color: "888888", size: 18 }));
-        sectionChildren.push(emptyLine());
-
-        // ── Winner ──
         if(wt){
-            sectionChildren.push(new Paragraph({
-                heading: HeadingLevel.HEADING_2,
-                children: [new TextRun({ text: `${wt.emoji} ${wt.name} — Winner!`, bold: true, size: 30, color: "D4A017", font: "Calibri" })]
-            }));
-            sectionChildren.push(emptyLine());
+            body.push(wHeading(`WINNER: ${wt.name}`, 2, { color: "B8860B" }));
+            body.push(wPara(""));
         }
 
-        // ── Team Scores Table ──
-        sectionChildren.push(new Paragraph({
-            heading: HeadingLevel.HEADING_2,
-            children: [new TextRun({ text: `📊 ${t("teamScore")}`, bold: true, size: 28, font: "Calibri" })]
-        }));
-
+        // Team scores table
+        body.push(wHeading(t("teamScore"), 2));
         const scoreRows = [
-            new TableRow({
-                tableHeader: true,
-                children: [makeHeaderCell("Team"), makeHeaderCell("Score")]
-            }),
+            wTableRow([
+                wTableCell("Team", { fill: "2D3561", bold: true, color: "FFFFFF", width: 5000 }),
+                wTableCell("Score", { fill: "2D3561", bold: true, color: "FFFFFF", width: 4240 }),
+            ], true),
             ...Object.entries(d.team_scores).map(([tid, score]) => {
-                const team = S.teams[tid] || { emoji: "🏳️", name: tid };
-                return new TableRow({ children: [
-                    makeDataCell(`${team.emoji} ${team.name}`),
-                    makeDataCell(`${score} pts`, AlignmentType.RIGHT),
-                ]});
+                const team = S.teams[tid] || { name: tid };
+                return wTableRow([
+                    wTableCell(team.name, { width: 5000 }),
+                    wTableCell(`${score} pts`, { width: 4240 }),
+                ]);
             })
         ];
+        body.push(wTable(scoreRows, [5000, 4240]));
+        body.push(wPara(""));
 
-        sectionChildren.push(new Table({
-            width: fullWidth,
-            columnWidths: [4620, 4620],
-            rows: scoreRows
-        }));
-        sectionChildren.push(emptyLine());
-
-        // ── Leaderboard ──
-        sectionChildren.push(new Paragraph({
-            heading: HeadingLevel.HEADING_2,
-            children: [new TextRun({ text: `🏆 ${t("leaderboard")}`, bold: true, size: 28, font: "Calibri" })]
-        }));
-
-        const medals = ["🥇","🥈","🥉"];
+        // Leaderboard
+        body.push(wHeading(t("leaderboard"), 2));
         const lbRows = [
-            new TableRow({
-                tableHeader: true,
-                children: [makeHeaderCell("Rank"), makeHeaderCell("Player"), makeHeaderCell("Team"), makeHeaderCell("Score")]
-                    .map((_, i, arr) => {
-                        // Rebuild with 3 cols
-                        return i < 4 ? arr[i] : null;
-                    }).filter(Boolean)
+            wTableRow([
+                wTableCell("Rank", { fill: "2D3561", bold: true, color: "FFFFFF", width: 1000 }),
+                wTableCell("Player", { fill: "2D3561", bold: true, color: "FFFFFF", width: 3500 }),
+                wTableCell("Team", { fill: "2D3561", bold: true, color: "FFFFFF", width: 2500 }),
+                wTableCell("Score", { fill: "2D3561", bold: true, color: "FFFFFF", width: 2240 }),
+            ], true),
+            ...(d.leaderboard || []).map((p, i) => {
+                const team = S.teams[p.team] || { name: p.team };
+                return wTableRow([
+                    wTableCell(medals[i] || `#${i+1}`, { width: 1000 }),
+                    wTableCell(p.first_name, { bold: i === 0, width: 3500 }),
+                    wTableCell(team.name, { width: 2500 }),
+                    wTableCell(`${p.score} pts`, { bold: i === 0, width: 2240 }),
+                ]);
             })
         ];
+        body.push(wTable(lbRows, [1000, 3500, 2500, 2240]));
+        body.push(wPara(""));
 
-        // Actually build leaderboard as paragraphs (simpler, no complex table needed)
-        (d.leaderboard || []).forEach((p, i) => {
-            const team = S.teams[p.team] || { emoji: "🏳️", name: p.team };
-            sectionChildren.push(makePara(
-                `${medals[i] || "#"+(i+1)} ${p.first_name}  (${team.emoji} ${team.name})  —  ${p.score} pts`,
-                { size: 22, bold: i === 0 }
-            ));
-        });
-        sectionChildren.push(emptyLine());
-
-        // ── Question Breakdown ──
+        // Question breakdown
         if(S.qLog.length){
-            sectionChildren.push(new Paragraph({
-                heading: HeadingLevel.HEADING_2,
-                children: [new TextRun({ text: `📝 ${t("questionBreakdown")}`, bold: true, size: 28, font: "Calibri" })]
-            }));
+            body.push(wHeading(t("questionBreakdown"), 2));
 
             S.qLog.forEach((q, qi) => {
                 if(!q || !q.text) return;
 
-                sectionChildren.push(new Paragraph({
-                    heading: HeadingLevel.HEADING_3,
-                    spacing: { before: 200 },
-                    children: [new TextRun({ text: `Q${qi+1}: ${q.text}`, bold: true, size: 24, font: "Calibri" })]
-                }));
+                body.push(wHeading(`Q${qi+1}: ${q.text}`, 3));
 
                 const opts = q.options || [];
                 if(q.correct_idx >= 0 && opts[q.correct_idx]){
-                    sectionChildren.push(makePara(
-                        `✅ ${t("correctAns")}: ${LETTERS[q.correct_idx]}. ${opts[q.correct_idx]}`,
-                        { color: "2E7D32", size: 20 }
+                    body.push(wPara(wRun(
+                        `Correct Answer: ${LETTERS[q.correct_idx]}. ${opts[q.correct_idx]}`,
+                        { color: "2E7D32", size: 20, bold: true }
+                    )));
+                }
+
+                // Options list
+                opts.forEach((opt, oi) => {
+                    const isCorrect = oi === q.correct_idx;
+                    body.push(wPara(
+                        wRun(`  ${LETTERS[oi]}. ${opt}`, { size: 20, color: isCorrect ? "2E7D32" : "444444", bold: isCorrect })
                     ));
-                }
+                });
 
-                // Player answers for this question
+                body.push(wPara(""));
+
+                // Player answers table
                 const answers = q.answers || {};
-                const answerEntries = Object.entries(answers);
-
-                if(answerEntries.length > 0){
+                const ansEntries = Object.entries(answers);
+                if(ansEntries.length > 0){
                     const ansRows = [
-                        new TableRow({
-                            tableHeader: true,
-                            children: [
-                                makeHeaderCell("Player"),
-                                makeHeaderCell("Result"),
-                                makeHeaderCell("Points"),
-                            ]
-                        }),
-                        ...answerEntries.map(([, ans]) => {
-                            return new TableRow({ children: [
-                                makeDataCell(ans.name || "?"),
-                                makeDataCell(ans.correct ? "✓ Correct" : "✗ Wrong"),
-                                makeDataCell(ans.correct ? `+${ans.pts}` : "—", AlignmentType.RIGHT),
-                            ]});
-                        })
+                        wTableRow([
+                            wTableCell("Player", { fill: "1C2540", bold: true, color: "FFFFFF", width: 3800 }),
+                            wTableCell("Result", { fill: "1C2540", bold: true, color: "FFFFFF", width: 2800 }),
+                            wTableCell("Points", { fill: "1C2540", bold: true, color: "FFFFFF", width: 2640 }),
+                        ], true),
+                        ...ansEntries.map(([, ans]) => wTableRow([
+                            wTableCell(ans.name || "?", { width: 3800 }),
+                            wTableCell(ans.correct ? "Correct" : "Wrong", {
+                                width: 2800,
+                                color: ans.correct ? "2E7D32" : "B71C1C",
+                                bold: true
+                            }),
+                            wTableCell(ans.correct ? `+${ans.pts}` : "-", {
+                                width: 2640,
+                                color: ans.correct ? "2E7D32" : "999999"
+                            }),
+                        ]))
                     ];
-
-                    // Use 3-column table for question answers
-                    const col3 = 3080;
-                    sectionChildren.push(new Table({
-                        width: fullWidth,
-                        columnWidths: [col3, col3, col3],
-                        rows: ansRows.map(row => {
-                            // Rebuild cells with 3-col widths
-                            return row;
-                        })
-                    }));
+                    body.push(wTable(ansRows, [3800, 2800, 2640]));
                 } else {
-                    sectionChildren.push(makePara("No answers recorded.", { color: "999999", size: 20 }));
+                    body.push(wPara(wRun("No answers recorded.", { color: "999999", size: 20 })));
                 }
 
-                sectionChildren.push(emptyLine());
+                body.push(wPara(""));
             });
         }
 
-        const doc = new Document({
-            creator: "Quiz Battle",
-            title: quizTitle,
-            styles: {
-                default: {
-                    document: { run: { font: "Calibri", size: 24 } }
-                },
-                paragraphStyles: [
-                    {
-                        id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true,
-                        run: { size: 40, bold: true, font: "Calibri" },
-                        paragraph: { spacing: { before: 240, after: 120 } }
-                    },
-                    {
-                        id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true,
-                        run: { size: 28, bold: true, font: "Calibri" },
-                        paragraph: { spacing: { before: 200, after: 100 } }
-                    },
-                    {
-                        id: "Heading3", name: "Heading 3", basedOn: "Normal", next: "Normal", quickFormat: true,
-                        run: { size: 24, bold: true, font: "Calibri" },
-                        paragraph: { spacing: { before: 160, after: 80 } }
-                    },
-                ]
-            },
-            sections: [{
-                properties: {
-                    page: {
-                        size: { width: 12240, height: 15840 },
-                        margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
-                    }
-                },
-                children: sectionChildren
-            }]
-        });
+        // ── Assemble document.xml ──
+        const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+    xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+    xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+    xmlns:o="urn:schemas-microsoft-com:office:office"
+    xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+    xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+    xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"
+    xmlns:v="urn:schemas-microsoft-com:vml"
+    xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"
+    xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+    xmlns:w10="urn:schemas-microsoft-com:office:word"
+    xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
+    xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml"
+    xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+    xmlns:w16cid="http://schemas.microsoft.com/office/word/2016/wordml/cid"
+    xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+    xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+    xmlns:w16se="http://schemas.microsoft.com/office/word/2015/wordml/symex"
+    xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"
+    xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk"
+    xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml"
+    xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+    mc:Ignorable="w14 w15 w16se w16cid w16 w16cex w16sdtdh wp14">
+<w:body>${body.join("")}<w:sectPr>
+    <w:pgSz w:w="12240" w:h="15840"/>
+    <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" w:gutter="0"/>
+</w:sectPr></w:body></w:document>`;
 
-        const blob = await Packer.toBlob(doc);
+        // ── Styles XML ──
+        const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" w:docDefaults="">
+<w:docDefaults><w:rPrDefault><w:rPr>
+    <w:rFonts w:ascii="Calibri" w:eastAsia="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>
+    <w:sz w:val="24"/><w:szCs w:val="24"/>
+</w:rPr></w:rPrDefault></w:docDefaults>
+<w:style w:type="paragraph" w:styleId="Normal"><w:name w:val="Normal"/></w:style>
+<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/>
+<w:basedOn w:val="Normal"/><w:next w:val="Normal"/>
+<w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr>
+<w:rPr><w:b/><w:bCs/><w:sz w:val="40"/><w:szCs w:val="40"/>
+<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/>
+<w:basedOn w:val="Normal"/><w:next w:val="Normal"/>
+<w:pPr><w:spacing w:before="200" w:after="100"/></w:pPr>
+<w:rPr><w:b/><w:bCs/><w:sz w:val="32"/><w:szCs w:val="32"/>
+<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/>
+<w:basedOn w:val="Normal"/><w:next w:val="Normal"/>
+<w:pPr><w:spacing w:before="160" w:after="80"/></w:pPr>
+<w:rPr><w:b/><w:bCs/><w:sz w:val="26"/><w:szCs w:val="26"/>
+<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr></w:style>
+<w:style w:type="table" w:styleId="TableGrid"><w:name w:val="Table Grid"/>
+<w:tblPr><w:tblBorders>
+    <w:top w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+    <w:left w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+    <w:bottom w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+    <w:right w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+    <w:insideH w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+    <w:insideV w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+</w:tblBorders></w:tblPr></w:style>
+</w:styles>`;
+
+        // ── [Content_Types].xml ──
+        const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+</Types>`;
+
+        // ── _rels/.rels ──
+        const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+        // ── word/_rels/document.xml.rels ──
+        const wordRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+        // ── Build ZIP ──
+        DocxZip.reset();
+        DocxZip.add("[Content_Types].xml", contentTypes);
+        DocxZip.add("_rels/.rels", rels);
+        DocxZip.add("word/document.xml", documentXml);
+        DocxZip.add("word/styles.xml", stylesXml);
+        DocxZip.add("word/_rels/document.xml.rels", wordRels);
+
+        const zipBytes = DocxZip.build();
+        const blob = new Blob([zipBytes], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -1339,33 +1478,11 @@ async function exportResults(){
         toast(t("exported"), "ok");
     } catch(err){
         console.error("DOCX export error:", err);
-        toast(t("exportFail") + ": " + (err.message || "unknown error"), "err");
+        toast(t("exportFail") + ": " + (err.message || "unknown"), "err");
     } finally {
         btn.disabled = false;
         btn.innerHTML = origHTML;
     }
-}
-
-// Load docx library on-demand
-function loadDocxLib(){
-    return new Promise((resolve, reject) => {
-        // If already loaded and has Document constructor, use it
-        if(window.docx && window.docx.Document){
-            resolve(); return;
-        }
-        const script = document.createElement("script");
-        script.src = "https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js";
-        script.onload = () => {
-            // docx UMD exposes as window.docx
-            if(window.docx && window.docx.Document){
-                resolve();
-            } else {
-                reject(new Error("docx loaded but Document not found"));
-            }
-        };
-        script.onerror = () => reject(new Error("Failed to load docx library"));
-        document.head.appendChild(script);
-    });
 }
 
 // ══════════════════════════════════════════

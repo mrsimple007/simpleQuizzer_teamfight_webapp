@@ -35,7 +35,7 @@ async def serve_index():
 async def serve_index_html():
     return FileResponse("index.html")
 
-# ==================== TEAM TEMPLATES ====================
+# ==================== TEAM TEMPLATES ===================
 TEAM_TEMPLATES = [
     {"color": "#FF6B6B", "emoji": "🔴", "name": "Red"},
     {"color": "#4ECDC4", "emoji": "🔵", "name": "Blue"},
@@ -43,6 +43,8 @@ TEAM_TEMPLATES = [
     {"color": "#A29BFE", "emoji": "🟣", "name": "Purple"},
     {"color": "#55EFC4", "emoji": "🟢", "name": "Green"},
     {"color": "#FD79A8", "emoji": "🩷", "name": "Pink"},
+    {"color": "#FFFFFF", "emoji": "⚪️", "name": "White"},
+    {"color": "#030303", "emoji": "⚫️", "name": "Black"},
 ]
 
 # ==================== PERSISTENCE ====================

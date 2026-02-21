@@ -59,6 +59,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .tsc-emoji{font-size:36px;margin-bottom:8px;position:relative;z-index:1}
 .tsc-name{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px;position:relative;z-index:1}
 .tsc-cnt{font-size:11px;color:var(--muted);margin-bottom:12px;position:relative;z-index:1}
+/* FIX #6: show players in team select cards too */
+.tsc-players{font-size:10px;color:var(--muted2);margin-bottom:8px;position:relative;z-index:1;min-height:14px}
 .tsc-btn{position:relative;z-index:1;width:100%;padding:8px 0;background:var(--tc,var(--accent));color:#fff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;border:none;border-radius:50px;cursor:pointer;transition:opacity .2s,transform .15s}
 .tsc-btn:hover{opacity:.85;transform:scale(1.03)}
 
@@ -84,35 +86,48 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .start-btn:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(91,110,245,.4)}
 .start-btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
 
-/* MODAL */
+/* MODAL — FIX #1: stats modal scrollable */
 .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s ease}
 .modal-ov.open{opacity:1;pointer-events:all}
 .modal-ov.open .modal-box{transform:translateY(0)}
-.modal-box{background:var(--surf);border:1px solid var(--border2);border-radius:24px 24px 0 0;width:100%;max-width:540px;transform:translateY(100%);transition:transform .38s cubic-bezier(.22,1,.36,1);overflow:hidden}
-.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:22px 24px 16px;border-bottom:1px solid var(--border)}
+.modal-box{background:var(--surf);border:1px solid var(--border2);border-radius:24px 24px 0 0;width:100%;max-width:540px;transform:translateY(100%);transition:transform .38s cubic-bezier(.22,1,.36,1);overflow:hidden;
+  /* FIX #1: allow the whole modal box to be a flex column with max height */
+  display:flex;flex-direction:column;max-height:90vh;}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:22px 24px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
 .modal-hd h3{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700}
 .modal-x{width:32px;height:32px;background:var(--surf2);border:1px solid var(--border2);border-radius:50%;color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
 .modal-x:hover{background:var(--surf3);color:var(--text)}
-.modal-bd{padding:24px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.modal-bd{padding:24px;display:flex;flex-direction:column;align-items:center;gap:12px;overflow-y:auto;flex:1}
 .m-preview{font-size:52px;line-height:1;filter:drop-shadow(0 4px 16px rgba(0,0,0,.3))}
 .m-hint{font-size:13px;color:var(--muted);text-align:center}
 .m-input{width:100%;padding:14px 18px;background:var(--surf2);border:1.5px solid var(--border2);border-radius:var(--r2);color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:500;outline:none;transition:border-color .2s,box-shadow .2s;caret-color:var(--accent)}
 .m-input::placeholder{color:var(--muted2)}
 .m-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,110,245,.15)}
-.m-actions{width:100%;display:flex;gap:10px;padding-bottom:env(safe-area-inset-bottom,0)}
+.m-actions{width:100%;display:flex;gap:10px;padding-bottom:env(safe-area-inset-bottom,0);flex-shrink:0}
 .m-cancel{flex:1;padding:13px;background:var(--surf2);border:1px solid var(--border2);border-radius:var(--r2);color:var(--muted);font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
 .m-cancel:hover{background:var(--surf3);color:var(--text)}
 .m-confirm{flex:2;padding:13px;background:linear-gradient(135deg,var(--accent),#8B5CF6);border:none;border-radius:var(--r2);color:#fff;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
 .m-confirm:hover{opacity:.88;transform:translateY(-1px)}
 
-/* STATS MODAL */
-#stats-modal .modal-box{max-height:88vh;display:flex;flex-direction:column}
-.stats-scroll{overflow-y:auto;flex:1;padding:0 20px 28px}
+/* FIX #1: STATS MODAL — proper scroll */
+#modal-stats .modal-box{max-height:90vh}
+.stats-scroll{
+  overflow-y:auto;
+  flex:1;
+  padding:0 20px 28px;
+  /* FIX #1: force scroll to work on iOS */
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
 .stats-scroll::-webkit-scrollbar{width:4px}
 .stats-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* FIX #5: Per-question breakdown in stats */
 .stats-q-block{margin-bottom:16px;background:var(--surf2);border-radius:14px;padding:16px}
 .stats-q-num{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
-.stats-q-text{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;margin-bottom:12px;line-height:1.4;border-bottom:1px solid var(--border);padding-bottom:10px}
+.stats-q-text{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;margin-bottom:8px;line-height:1.4;border-bottom:1px solid var(--border);padding-bottom:10px}
+/* FIX #5: Show correct answer in stats */
+.stats-correct-ans{font-size:11px;color:var(--success);background:rgba(67,217,142,.1);border-radius:6px;padding:4px 10px;margin-bottom:12px;display:inline-block}
 .stats-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:13px}
 .stats-row:last-child{margin-bottom:0}
 .s-av{width:26px;height:26px;flex-shrink:0;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
@@ -158,6 +173,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .opt:hover:not(.dis):not(.pending)::before{opacity:.1}
 .opt.pending{border-color:var(--oc);border-style:dashed}
 .opt.pending .opt-ltr{opacity:.7}
+/* FIX #4: correct/wrong only shown after question_ended */
 .opt.correct{border-color:var(--success) !important;background:rgba(67,217,142,.13) !important}
 .opt.correct .opt-ltr{background:var(--success) !important}
 .opt.wrong-sel{border-color:var(--danger) !important;background:rgba(240,96,96,.1) !important}
@@ -167,8 +183,14 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .opt-txt{position:relative;z-index:1;line-height:1.3}
 .ans-feed{width:100%;display:flex;flex-wrap:wrap;gap:6px;min-height:24px}
 .feed-chip{padding:4px 10px;border-radius:50px;font-size:11px;font-weight:600;animation:chipIn .2s ease;background:rgba(91,110,245,.1);border:1px solid rgba(91,110,245,.2);color:var(--muted)}
+.feed-chip.correct{background:rgba(67,217,142,.1);border-color:rgba(67,217,142,.3);color:var(--success)}
+.feed-chip.wrong{background:rgba(240,96,96,.1);border-color:rgba(240,96,96,.3);color:var(--danger)}
 .pts-pop{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Outfit',sans-serif;font-size:58px;font-weight:900;color:#fff;text-shadow:0 0 40px var(--accent),0 4px 20px rgba(0,0,0,.5);pointer-events:none;animation:pp 1.2s ease-out forwards;z-index:100}
 @keyframes pp{0%{opacity:0;transform:translate(-50%,-20%)}20%{opacity:1;transform:translate(-50%,-55%)}80%{opacity:1;transform:translate(-50%,-75%)}100%{opacity:0;transform:translate(-50%,-95%)}}
+
+/* FIX #5: Question timing display */
+.q-timing-bar{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surf2);border-radius:12px;font-size:12px;color:var(--muted)}
+.q-timing-bar strong{color:var(--text);font-family:'Outfit',sans-serif;font-weight:700}
 
 /* FINISHED */
 #s-fin{justify-content:flex-start;padding-top:20px;gap:16px;width:100%}
@@ -180,10 +202,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .fin-emoji{font-size:34px;margin-bottom:6px}
 .fin-name{font-size:12px;color:var(--muted);margin-bottom:8px}
 .fin-pts{font-family:'Outfit',sans-serif;font-size:28px;font-weight:900}
-.fin-btns{display:flex;gap:10px;width:100%}
-.fin-btn{flex:1;padding:14px 10px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;border-radius:14px;cursor:pointer;transition:all .2s;border:none;display:flex;align-items:center;justify-content:center;gap:6px}
+/* FIX #3: Export button styling */
+.fin-btns{display:flex;gap:10px;width:100%;flex-wrap:wrap}
+.fin-btn{flex:1;min-width:120px;padding:14px 10px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;border-radius:14px;cursor:pointer;transition:all .2s;border:none;display:flex;align-items:center;justify-content:center;gap:6px}
 .fin-btn.stats-btn{background:var(--surf2);border:1px solid var(--border2);color:var(--text)}
 .fin-btn.stats-btn:hover{background:var(--surf3);border-color:var(--accent);color:var(--accent)}
+.fin-btn.export-btn{background:rgba(67,217,142,.12);border:1px solid rgba(67,217,142,.35);color:var(--success)}
+.fin-btn.export-btn:hover{background:rgba(67,217,142,.2);transform:translateY(-1px)}
 .fin-btn.back-btn{background:linear-gradient(135deg,var(--accent),#8B5CF6);color:#fff;box-shadow:0 4px 16px rgba(91,110,245,.3)}
 .fin-btn.back-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(91,110,245,.4)}
 .lb-card{width:100%;background:var(--surf);border:1px solid var(--border2);border-radius:var(--r);padding:22px}
@@ -201,6 +226,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .toast.ok{border-color:rgba(67,217,142,.4);color:var(--success)}
 .toast.err{border-color:rgba(240,96,96,.4);color:var(--danger)}
 .toast.inf{border-color:rgba(91,110,245,.4);color:#a0aaff}
+
+/* Question ended overlay */
+.q-ended-banner{display:none;background:rgba(67,217,142,.12);border:1px solid rgba(67,217,142,.3);border-radius:10px;padding:10px 16px;text-align:center;width:100%;font-size:13px;font-weight:600;color:var(--success)}
+.q-ended-banner.show{display:block;animation:fadeUp .3s ease}
 
 @media(max-width:380px){
     .opts{grid-template-columns:1fr}
@@ -271,11 +300,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <div class="timer-num" id="timer">30</div>
             <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
         </div>
+        <!-- FIX #5: question timing info bar -->
+        <div class="q-timing-bar" id="q-timing-bar">
+            <span id="q-num-label">Question 1 / 5</span>
+            <span>⏱️ <strong id="q-time-label">30s</strong> per question</span>
+        </div>
         <div class="q-card">
             <div class="q-meta" id="q-meta">Question 1 / 5</div>
             <h2 class="q-text" id="q-text">Loading...</h2>
             <div class="opts" id="opts"></div>
         </div>
+        <div class="q-ended-banner" id="q-ended-banner">✅ Correct answer revealed! Next question starting...</div>
         <div class="ans-feed" id="ans-feed"></div>
     </div>
 
@@ -284,8 +319,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <h1 class="win-txt" id="win-txt">🏆 Results</h1>
             <div class="fin-scores" id="fin-scores"></div>
             <div class="fin-btns">
-                <button class="fin-btn stats-btn" onclick="openStats()">📊 Detailed Stats</button>
-                <button class="fin-btn back-btn" onclick="goBack()">🏠 Back to Bot</button>
+                <button class="fin-btn stats-btn" onclick="openStats()">📊 Stats</button>
+                <!-- FIX #3: Export button -->
+                <button class="fin-btn export-btn" onclick="exportResults()" id="export-btn">📤 Export</button>
+                <button class="fin-btn back-btn" onclick="goBack()">🏠 Close</button>
             </div>
         </div>
         <div class="lb-card">
@@ -314,13 +351,14 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
 </div>
 
-<!-- STATS MODAL -->
+<!-- FIX #1: STATS MODAL — scrollable body -->
 <div id="modal-stats" class="modal-ov" onclick="bgClose(event,'modal-stats')">
-    <div class="modal-box" id="stats-modal-box">
+    <div class="modal-box">
         <div class="modal-hd">
             <h3>📊 Detailed Stats</h3>
             <button class="modal-x" onclick="closeM('modal-stats')">✕</button>
         </div>
+        <!-- FIX #1: stats-scroll is now flex:1 + overflow-y:auto inside a flex column modal-box -->
         <div class="stats-scroll" id="stats-body"></div>
     </div>
 </div>
@@ -328,7 +366,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <div id="toast" class="toast"></div>
 
 <script>
-// mirrors backend TEAM_TEMPLATES order exactly
 const TEMPLATES = [
     {color:"#FF6B6B",emoji:"🔴",name:"Red"},
     {color:"#4ECDC4",emoji:"🔵",name:"Blue"},
@@ -349,9 +386,10 @@ const S = {
     myTeam:null, teams:{}, teamScores:{},
     curQ:null, timerInt:null, answered:false,
     myAnswerIdx:null,
-    qLog:[],
+    qLog:[],       // { text, options, correct_idx, answers:{uid:{name,correct,pts,teamColor}} }
     finData:null,
     lastCdVal:null,
+    quizTime:30,   // FIX #5: track per-question time
 };
 const API = window.location.origin;
 
@@ -376,8 +414,56 @@ async function init(){
         if(d.error){ showErr("Room not found."); return; }
         document.getElementById("quiz-title").textContent = d.quiz_title||"🎮 Quiz Battle";
         document.getElementById("room-code").textContent  = S.roomId;
+
+        // FIX #2: If game already finished, try to load results
+        if(d.state === "finished"){
+            await tryLoadFinishedResults();
+            return;
+        }
+
         connectWS();
     } catch(e){ showErr("Could not connect to server."); }
+}
+
+// FIX #2: Load finished results when reopening
+async function tryLoadFinishedResults(){
+    try {
+        const r = await fetch(`${API}/api/room/${S.roomId}/results`);
+        const d = await r.json();
+        if(d.error){ showErr("This battle has ended."); return; }
+        S.teams = d.teams;
+        // Rebuild qLog from question_stats
+        S.qLog = (d.question_stats || []).map(q => {
+            const answers = {};
+            for(const pa of (q.player_answers || [])){
+                let teamColor="#aaa";
+                for(const t of Object.values(d.teams)){
+                    if(t.players?.find(p=>p.user_id===pa.user_id)){ teamColor=t.color; break; }
+                }
+                answers[pa.user_id] = {
+                    name: pa.first_name,
+                    correct: pa.is_correct,
+                    pts: pa.points,
+                    teamColor,
+                };
+            }
+            return {
+                text: q.question_text,
+                options: q.options,
+                correct_idx: typeof q.correct_answer === 'number' ? q.correct_answer : -1,
+                answers,
+            };
+        });
+        showFin({
+            team_scores: d.team_scores,
+            teams: d.teams,
+            leaderboard: d.leaderboard,
+            winner_team: d.winner_team,
+            question_log: S.qLog,
+        });
+    } catch(e){
+        showErr("Could not load results.");
+    }
 }
 
 // ══════════════════════════════════════════
@@ -402,7 +488,7 @@ function handleMsg(d){
             renderTeams(); showState("s-lobby"); break;
 
         case "teams_updated":
-        case "player_joined":
+        case "player_joined": // FIX #6: always re-render teams on join
             if(d.teams) S.teams=d.teams;
             renderTeams(); updateStart(); break;
 
@@ -420,12 +506,16 @@ function handleMsg(d){
             S.lastCdVal = null;
             showQ(d); break;
 
+        // FIX #4: correct answer only shown on question_ended
+        case "question_ended":
+            onQuestionEnded(d); break;
+
         case "answer_submitted":
             onAnswerSubmitted(d); break;
 
         case "quiz_finished":
-            revealMyAnswer();
-            setTimeout(()=>showFin(d), 600);
+            // question_ended already revealed last answer; just show results
+            setTimeout(()=>showFin(d), 800);
             break;
 
         case "error":
@@ -434,7 +524,7 @@ function handleMsg(d){
 }
 
 // ══════════════════════════════════════════
-//  TEAM RENDERING
+//  TEAM RENDERING — FIX #6: show player names everywhere
 // ══════════════════════════════════════════
 function renderTeams(){
     const ids=Object.keys(S.teams);
@@ -442,39 +532,49 @@ function renderTeams(){
     for(const t of Object.values(S.teams)) total+=(t.players||[]).length;
     setText("pc1",total); setText("pc2",total);
 
+    // Selection grid
     const sg=el("sel-grid"); sg.innerHTML="";
     for(const [tid,team] of Object.entries(S.teams)){
-        const cnt=(team.players||[]).length;
+        const pl = team.players||[];
+        const cnt = pl.length;
         const c=document.createElement("div");
         c.className="tsc"; c.style.setProperty("--tc",team.color);
+        // FIX #6: show player names in selection grid too
+        const playerNames = pl.length > 0
+            ? pl.map(p=>`<span>${p.first_name}</span>`).join(', ')
+            : 'Empty';
         c.innerHTML=`<div class="tsc-glow"></div>
             <div class="tsc-emoji">${team.emoji}</div>
             <div class="tsc-name">${team.name}</div>
             <div class="tsc-cnt">${cnt} player${cnt!==1?'s':''}</div>
+            <div class="tsc-players">${playerNames}</div>
             <button class="tsc-btn" onclick="joinTeam('${tid}')">Join</button>`;
         sg.appendChild(c);
     }
 
+    // Lobby teams grid
     const tg2=el("teams-grid"); tg2.innerHTML="";
     for(const [tid,team] of Object.entries(S.teams)){
         const pl=team.players||[];
         const c=document.createElement("div");
         c.className="team-card"; c.style.setProperty("--tc",team.color);
+        // FIX #6: full player chip list with username
+        const playerChips = pl.length===0
+            ? '<div class="no-p">Empty</div>'
+            : pl.map(p=>`<div class="p-chip ${p.user_id===S.userId?'me':''}">
+                <div class="p-av">${(p.first_name||'?')[0].toUpperCase()}</div>
+                <span>${p.first_name}${p.user_id===S.userId?' <em>(You)</em>':''}</span>
+              </div>`).join('');
         c.innerHTML=`<div class="tc-top">
             <span class="tc-emoji">${team.emoji}</span>
             <div class="tc-info">
                 <span class="tc-name">${team.name}</span>
                 <span class="tc-count">${pl.length} player${pl.length!==1?'s':''}</span>
             </div></div>
-            <div class="tc-players">${pl.length===0
-                ?'<div class="no-p">Empty</div>'
-                :pl.map(p=>`<div class="p-chip ${p.user_id===S.userId?'me':''}">
-                    <div class="p-av">${(p.first_name||'?')[0].toUpperCase()}</div>
-                    <span>${p.first_name}${p.user_id===S.userId?' <em>(You)</em>':''}</span>
-                    </div>`).join('')}
-            </div>`;
+            <div class="tc-players">${playerChips}</div>`;
         tg2.appendChild(c);
     }
+
     const ab=el("add-btn-top");
     if(ab) ab.style.display=ids.length>=6?"none":"flex";
 }
@@ -499,13 +599,9 @@ function startGame(){ send({type:"start_game"}); }
 
 // ══════════════════════════════════════════
 //  ADD TEAM MODAL
-//  FIX: Look at ACTUAL current team count to predict next template index
 // ══════════════════════════════════════════
 function openAddTeam(){
     const currentCount = Object.keys(S.teams).length;
-    // Backend starts with 3 default teams (indices 0,1,2) and next_team_idx=3
-    // So the Nth added team uses template index: 3 + (currentCount - 3) = currentCount
-    // Simplified: next template = currentCount % TEMPLATES.length
     const templateIdx = currentCount % TEMPLATES.length;
     const preview = TEMPLATES[templateIdx];
     el("m-preview").textContent = preview.emoji;
@@ -515,7 +611,6 @@ function openAddTeam(){
 }
 function confirmAdd(){
     const name = el("m-input").value.trim();
-    // FIX: always send custom_name key; send empty string if blank so backend uses template name
     send({type:"add_team", custom_name: name || null});
     closeM("modal-add");
     toast("Creating team...","inf");
@@ -534,17 +629,27 @@ function animCD(n){
 }
 
 // ══════════════════════════════════════════
-//  QUESTION
+//  QUESTION — FIX #4: no correct answer in payload; FIX #5: timing bar
 // ══════════════════════════════════════════
 function showQ(d){
     showState("s-play");
     S.curQ=d; S.answered=false; S.myAnswerIdx=null;
+    S.quizTime = d.time_limit || 30;
     el("ans-feed").innerHTML="";
+    el("q-ended-banner").classList.remove("show");
 
-    S.qLog[d.question_idx]={ text:d.question_text, options:d.options, answers:{} };
+    // Init log entry for this question
+    while(S.qLog.length <= d.question_idx){
+        S.qLog.push({ text:"", options:[], correct_idx:-1, answers:{} });
+    }
+    S.qLog[d.question_idx].text = d.question_text;
+    S.qLog[d.question_idx].options = d.options;
 
-    setText("q-meta",`Question ${d.question_idx+1} / ${d.total_questions}`);
-    setText("q-text",d.question_text);
+    // FIX #5: Question number + time
+    setText("q-meta", `Question ${d.question_idx+1} / ${d.total_questions}`);
+    setText("q-num-label", `Question ${d.question_idx+1} / ${d.total_questions}`);
+    setText("q-time-label", `${d.time_limit}s`);
+    setText("q-text", d.question_text);
 
     const optsEl=el("opts"); optsEl.innerHTML="";
     d.options.forEach((opt,i)=>{
@@ -569,18 +674,53 @@ function submitAns(idx,btn){
     send({type:"answer", question_idx:S.curQ.question_idx, answer:idx});
 }
 
-function onAnswerSubmitted(d){
-    const qi = S.curQ?.question_idx ?? 0;
-    if(S.qLog[qi]){
-        let teamColor="#aaa";
-        for(const t of Object.values(S.teams)){
-            if(t.players?.find(p=>p.user_id===d.user_id)){ teamColor=t.color; break; }
-        }
-        S.qLog[qi].answers[d.user_id]={
-            name:d.first_name, correct:d.is_correct, pts:d.points||0, teamColor
-        };
+// FIX #4: Reveal correct answer only when server sends question_ended
+function onQuestionEnded(d){
+    clearInterval(S.timerInt);
+    el("timer").textContent = "0";
+    el("timer-fill").style.width = "0%";
+
+    const correctIdx = d.correct_option_idx;
+    if(S.curQ){
+        S.qLog[S.curQ.question_idx].correct_idx = correctIdx;
     }
 
+    // Mark all options
+    document.querySelectorAll(".opt").forEach((b,i)=>{
+        b.classList.add("dis");
+        b.classList.remove("pending");
+        if(i === correctIdx){
+            b.classList.add("correct");
+        }
+    });
+
+    // Show if my answer was right or wrong
+    if(S.myAnswerIdx !== null && S.myAnswerIdx !== correctIdx){
+        el(`opt-${S.myAnswerIdx}`)?.classList.add("wrong-sel");
+    }
+
+    // FIX #5: Update answers log from server's question_answers
+    if(d.question_answers && S.curQ){
+        const qi = S.curQ.question_idx;
+        for(const [uid, ans] of Object.entries(d.question_answers)){
+            let teamColor="#aaa";
+            for(const t of Object.values(S.teams)){
+                if(t.players?.find(p=>String(p.user_id)===String(uid))){ teamColor=t.color; break; }
+            }
+            S.qLog[qi].answers[uid] = {
+                name: ans.first_name,
+                correct: ans.is_correct,
+                pts: ans.points,
+                teamColor,
+            };
+        }
+    }
+
+    el("q-ended-banner").classList.add("show");
+}
+
+function onAnswerSubmitted(d){
+    // FIX #6: update team scores live
     if(d.is_correct){
         for(const [tid,team] of Object.entries(S.teams)){
             if(team.players?.find(p=>p.user_id===d.user_id)){
@@ -593,30 +733,12 @@ function onAnswerSubmitted(d){
         }
     }
 
+    // Show feed chip with correct/wrong styling
     const feed=el("ans-feed");
     const chip=document.createElement("span");
-    chip.className="feed-chip";
-    chip.textContent=`${d.first_name} ✓`;
+    chip.className=`feed-chip ${d.is_correct?'correct':'wrong'}`;
+    chip.textContent=`${d.first_name} ${d.is_correct?'✓':'✗'}`;
     feed.appendChild(chip);
-}
-
-function revealMyAnswer(){
-    if(S.myAnswerIdx===null || !S.curQ) return;
-    const qi=S.curQ.question_idx;
-    const myRecord = S.qLog[qi]?.answers[S.userId];
-    if(!myRecord) return;
-
-    const myBtn=el(`opt-${S.myAnswerIdx}`);
-    if(!myBtn) return;
-    myBtn.classList.remove("pending");
-
-    if(myRecord.correct){
-        myBtn.classList.add("correct");
-        toast(`✅ Correct! +${myRecord.pts} pts`,"ok");
-    } else {
-        myBtn.classList.add("wrong-sel");
-        toast("❌ Wrong answer!","err");
-    }
 }
 
 function ptsPopup(txt){
@@ -640,10 +762,7 @@ function startTimer(secs){
         rem--;
         tNum.textContent=rem;
         tNum.className="timer-num"+(rem<=5?" warn":"");
-        if(rem<=0){
-            clearInterval(S.timerInt);
-            revealMyAnswer();
-        }
+        if(rem<=0){ clearInterval(S.timerInt); }
     },1000);
 }
 
@@ -670,6 +789,34 @@ function updateScoreBar(){
 function showFin(d){
     clearInterval(S.timerInt);
     S.finData=d;
+
+    // FIX #2: rebuild qLog from question_log payload if present
+    if(d.question_log && d.question_log.length > 0){
+        S.qLog = d.question_log.map(entry => {
+            const answers = {};
+            for(const [uid, ans] of Object.entries(entry.answers || {})){
+                let teamColor="#aaa";
+                const teams = d.teams || S.teams;
+                for(const t of Object.values(teams)){
+                    if(t.players?.find(p=>String(p.user_id)===String(uid))){ teamColor=t.color; break; }
+                }
+                answers[uid] = {
+                    name: ans.first_name,
+                    correct: ans.is_correct,
+                    pts: ans.points,
+                    teamColor,
+                };
+            }
+            return {
+                text: entry.question_text,
+                options: entry.options,
+                correct_idx: entry.correct_idx,
+                answers,
+            };
+        });
+    }
+
+    if(d.teams) S.teams = d.teams;
     showState("s-fin");
 
     const wt=S.teams[d.winner_team];
@@ -702,7 +849,80 @@ function showFin(d){
 }
 
 // ══════════════════════════════════════════
-//  STATS MODAL
+//  FIX #3: EXPORT RESULTS
+// ══════════════════════════════════════════
+async function exportResults(){
+    const btn = el("export-btn");
+    btn.disabled = true;
+    btn.textContent = "⏳ Exporting...";
+
+    try {
+        if(!S.finData){ toast("No results to export","err"); return; }
+
+        // Build a text summary
+        const d = S.finData;
+        const wt = S.teams[d.winner_team];
+        const quizTitle = el("quiz-title")?.textContent || "Quiz Battle";
+
+        let text = `🏆 *${quizTitle} — Results*\n`;
+        text += `Room: \`${S.roomId}\`\n\n`;
+
+        // Winner
+        if(wt) text += `🥇 Winner: *${wt.emoji} ${wt.name}*\n\n`;
+
+        // Team scores
+        text += `📊 *Team Scores:*\n`;
+        for(const [tid, score] of Object.entries(d.team_scores)){
+            const t = S.teams[tid]||{emoji:"🏳️",name:tid};
+            text += `${t.emoji} ${t.name}: *${score} pts*\n`;
+        }
+        text += `\n`;
+
+        // Leaderboard
+        text += `🏆 *Leaderboard:*\n`;
+        const medals = ["🥇","🥈","🥉"];
+        (d.leaderboard||[]).forEach((p,i)=>{
+            const t = S.teams[p.team]||{emoji:"🏳️",name:p.team};
+            text += `${medals[i]||`#${i+1}`} ${p.first_name} (${t.emoji} ${t.name}): *${p.score} pts*\n`;
+        });
+        text += `\n`;
+
+        // Per-question breakdown
+        text += `📝 *Question Breakdown:*\n`;
+        S.qLog.forEach((q, qi) => {
+            text += `\nQ${qi+1}: ${q.text}\n`;
+            const opts = q.options || [];
+            if(q.correct_idx >= 0 && opts[q.correct_idx]){
+                text += `✅ Correct: ${opts[q.correct_idx]}\n`;
+            }
+            // Player answers
+            for(const [uid, ans] of Object.entries(q.answers||{})){
+                const icon = ans.correct ? "✓" : "✗";
+                const pts = ans.correct ? ` +${ans.pts}pts` : "";
+                text += `  ${icon} ${ans.name}${pts}\n`;
+            }
+        });
+
+        // Send via Telegram if available
+        if(tg && tg.sendData){
+            tg.sendData(JSON.stringify({ action:"export_results", text, room_id:S.roomId }));
+            toast("Results sent to bot! ✅","ok");
+        } else {
+            // Fallback: copy to clipboard
+            await navigator.clipboard.writeText(text);
+            toast("Results copied to clipboard! 📋","ok");
+        }
+    } catch(e){
+        console.error(e);
+        toast("Export failed","err");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = "📤 Export";
+    }
+}
+
+// ══════════════════════════════════════════
+//  FIX #1: STATS MODAL — proper scroll
 // ══════════════════════════════════════════
 function openStats(){
     const body=el("stats-body"); body.innerHTML="";
@@ -712,7 +932,7 @@ function openStats(){
         openM("modal-stats"); return;
     }
 
-    const players = S.finData.leaderboard.map(p=>({
+    const players = (S.finData.leaderboard||[]).map(p=>({
         uid:p.user_id, name:p.first_name,
         teamColor:(S.teams[p.team]||{}).color||"#aaa",
         teamEmoji:(S.teams[p.team]||{}).emoji||"🏳️",
@@ -722,19 +942,26 @@ function openStats(){
         if(!q) return;
         const block=document.createElement("div");
         block.className="stats-q-block";
+
+        // FIX #5: Show correct answer in stats
+        const opts = q.options || [];
+        const correctText = (q.correct_idx >= 0 && opts[q.correct_idx])
+            ? `✅ Correct: ${LETTERS[q.correct_idx]}. ${opts[q.correct_idx]}`
+            : '';
+
         let rows="";
         for(const pl of players){
             const ans=q.answers[pl.uid];
             if(ans){
                 rows+=`<div class="stats-row">
-                    <div class="s-av" style="background:${ans.teamColor}">${pl.name[0].toUpperCase()}</div>
+                    <div class="s-av" style="background:${ans.teamColor}">${(pl.name||'?')[0].toUpperCase()}</div>
                     <span class="s-name">${pl.name}</span>
                     <span class="s-badge ${ans.correct?'ok':'no'}">${ans.correct?'✓ Correct':'✗ Wrong'}</span>
                     <span class="s-pts ${ans.correct?'earned':'zero'}">${ans.correct?'+'+ans.pts:'—'}</span>
                 </div>`;
             } else {
                 rows+=`<div class="stats-row">
-                    <div class="s-av" style="background:${pl.teamColor}">${pl.name[0].toUpperCase()}</div>
+                    <div class="s-av" style="background:${pl.teamColor}">${(pl.name||'?')[0].toUpperCase()}</div>
                     <span class="s-name">${pl.name}</span>
                     <span class="s-badge sk">⏭ Skipped</span>
                     <span class="s-pts zero">—</span>
@@ -742,11 +969,15 @@ function openStats(){
             }
         }
         block.innerHTML=`<div class="stats-q-num">Question ${qi+1} of ${S.qLog.length}</div>
-            <div class="stats-q-text">${q.text}</div>${rows}`;
+            <div class="stats-q-text">${q.text}</div>
+            ${correctText ? `<div class="stats-correct-ans">${correctText}</div>` : ''}
+            ${rows}`;
         body.appendChild(block);
     });
 
     openM("modal-stats");
+    // FIX #1: scroll to top after opening
+    setTimeout(()=>{ body.scrollTop = 0; }, 100);
 }
 
 function goBack(){
